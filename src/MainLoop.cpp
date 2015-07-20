@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <vector>
 
-#include "include/SteamPlusPlus.h"
-#include "include/MainLoop.h"
+#include "SteamPlusPlus.h"
+#include "MainLoop.h"
 
 const int kInputBufferSize = 512;
 

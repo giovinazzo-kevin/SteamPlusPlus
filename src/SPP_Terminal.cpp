@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "include/SteamPlusPlus.h"
+#include "SteamPlusPlus.h"
 
 #ifdef _WIN32
 #include <windows.h>

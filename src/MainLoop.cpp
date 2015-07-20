@@ -1,16 +1,16 @@
 #include <stdio.h>
 #include <vector>
+#include <thread>
 
 #include "SteamPlusPlus.h"
 #include "MainLoop.h"
 
 const int kInputBufferSize = 512;
 
-int main(int argc, char** argv)
+//! Handles user input and is responsible for running scripts
+void runInputLoop()
 {
-    spp::printf(spp::kPrintInfo, "Welcome to Steam++!\n");
-
-    char inbuf[kInputBufferSize];
+	char inbuf[kInputBufferSize];
     while(1) {
 		// Ask the user to input something
 		fflush(stdin);
@@ -32,11 +32,26 @@ int main(int argc, char** argv)
 		
 		// Try to run the script, passing it the arguments
 		// Please note that arguments are passed exactly like in C and C++, with the name of the executable being the first argument.
-		int ret = spp::runscript(argList[0], argc, &argList[0]);
+		int ret = spp::runScript(argList[0], argc, &argList[0]);
 		if(ret == -1) {
 			spp::printf(spp::kPrintError, "Script \"%s\" does not exist.\n", argList[0]);
 		}
     }
+}
 
+//! Iterates each script and calls their callbacks whenever appropriate
+void runScriptCallbackLoop()
+{
+	
+}
+
+int main(int argc, char** argv)
+{
+    spp::printf(spp::kPrintInfo, "Welcome to Steam++!\n");
+	
+	std:thread sclThread(runScriptCallbackLoop);
+	runInputLoop();
+	
+	sclThread.join();
     return 0;
 }

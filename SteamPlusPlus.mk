@@ -52,8 +52,8 @@ LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)lib
 AR       := K:/MinGW/bin/ar.exe rcu
 CXX      := K:/MinGW/bin/g++.exe
 CC       := K:/MinGW/bin/gcc.exe
-CXXFLAGS :=  -g -O0 -Wall $(Preprocessors)
-CFLAGS   :=  -g -O0 -Wall $(Preprocessors)
+CXXFLAGS :=  -g -O2 -Wall -std=c++11 $(Preprocessors)
+CFLAGS   :=  -g -O2 -Wall $(Preprocessors)
 ASFLAGS  := 
 AS       := K:/MinGW/bin/as.exe
 

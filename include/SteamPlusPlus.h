@@ -7,8 +7,11 @@
 
 namespace spp
 {
+/// This is the standard [Steam++] string that appears when an user is prompted to type.
 extern const char* kUserInputHeader;
 
+/// An argument that must be passed to functions like printf, determines the color of the outputted text.
+/// Since the way of handling character color varies across platforms, each mode has to be defined for both Windows and UNIX.
 enum PrintMode {
 #ifdef _WIN32
     kPrintNormal = 0xF,
@@ -29,14 +32,14 @@ enum PrintMode {
 #endif
 };
 
-// Both return the number of characters written.
+/// Both return the number of characters written.
 int printf(PrintMode printMode, const char* fmt, ...);
 int vprintf(PrintMode printMode, const char* fmt, va_list args);
 
-// Reads a line, returning back str. If displayHeader == true, preprends the line with kUserInputHeader.
+/// Reads a line, returning back str. If displayHeader == true, preprends the line with kUserInputHeader.
 char* gets(char* str, size_t n, int displayHeader = true);
 
-// Runs a script, returning its sid, or fails and returns -1.
+/// Runs a script, returning its sid, or fails and returns -1.
 int runscript(const char* script, int argc, const char** argv);
 }
 

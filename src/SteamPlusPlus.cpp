@@ -1,6 +1,6 @@
 #include "stdio.h"
 
-#include "SteamPlusPlus.h"
+#include "include/SteamPlusPlus.h"
 #ifdef _WIN32
 #include "windows.h"
 #endif

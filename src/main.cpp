@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "SteamPlusPlus.h"
+#include "include/SteamPlusPlus.h"
 
 int main(int argc, char **argv)
 {

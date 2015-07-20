@@ -62,7 +62,7 @@ AS       := K:/MinGW/bin/as.exe
 ## User defined environment variables
 ##
 CodeLiteDir:=D:\Program Files\CodeLite
-Objects0=$(IntermediateDirectory)/main.cpp$(ObjectSuffix) $(IntermediateDirectory)/SteamPlusPlus.cpp$(ObjectSuffix) 
+Objects0=$(IntermediateDirectory)/src_main.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_SteamPlusPlus.cpp$(ObjectSuffix) 
 
 
 
@@ -89,21 +89,21 @@ PreBuild:
 ##
 ## Objects
 ##
-$(IntermediateDirectory)/main.cpp$(ObjectSuffix): main.cpp $(IntermediateDirectory)/main.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "D:/Workspaces/CodeLite/C++/SteamPlusPlus/main.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/main.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/main.cpp$(DependSuffix): main.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/main.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/main.cpp$(DependSuffix) -MM "main.cpp"
+$(IntermediateDirectory)/src_main.cpp$(ObjectSuffix): src/main.cpp $(IntermediateDirectory)/src_main.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "D:/Workspaces/CodeLite/C++/SteamPlusPlus/src/main.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_main.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_main.cpp$(DependSuffix): src/main.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/src_main.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/src_main.cpp$(DependSuffix) -MM "src/main.cpp"
 
-$(IntermediateDirectory)/main.cpp$(PreprocessSuffix): main.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/main.cpp$(PreprocessSuffix) "main.cpp"
+$(IntermediateDirectory)/src_main.cpp$(PreprocessSuffix): src/main.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_main.cpp$(PreprocessSuffix) "src/main.cpp"
 
-$(IntermediateDirectory)/SteamPlusPlus.cpp$(ObjectSuffix): SteamPlusPlus.cpp $(IntermediateDirectory)/SteamPlusPlus.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "D:/Workspaces/CodeLite/C++/SteamPlusPlus/SteamPlusPlus.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/SteamPlusPlus.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/SteamPlusPlus.cpp$(DependSuffix): SteamPlusPlus.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/SteamPlusPlus.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/SteamPlusPlus.cpp$(DependSuffix) -MM "SteamPlusPlus.cpp"
+$(IntermediateDirectory)/src_SteamPlusPlus.cpp$(ObjectSuffix): src/SteamPlusPlus.cpp $(IntermediateDirectory)/src_SteamPlusPlus.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "D:/Workspaces/CodeLite/C++/SteamPlusPlus/src/SteamPlusPlus.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_SteamPlusPlus.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_SteamPlusPlus.cpp$(DependSuffix): src/SteamPlusPlus.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/src_SteamPlusPlus.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/src_SteamPlusPlus.cpp$(DependSuffix) -MM "src/SteamPlusPlus.cpp"
 
-$(IntermediateDirectory)/SteamPlusPlus.cpp$(PreprocessSuffix): SteamPlusPlus.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/SteamPlusPlus.cpp$(PreprocessSuffix) "SteamPlusPlus.cpp"
+$(IntermediateDirectory)/src_SteamPlusPlus.cpp$(PreprocessSuffix): src/SteamPlusPlus.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_SteamPlusPlus.cpp$(PreprocessSuffix) "src/SteamPlusPlus.cpp"
 
 
 -include $(IntermediateDirectory)/*$(DependSuffix)

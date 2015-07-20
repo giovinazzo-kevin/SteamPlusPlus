@@ -1,7 +1,9 @@
 #ifndef STEAMPLUS_H
 #define STEAMPLUS_H
 
-#include <cstdarg>
+#include <cstdarg> //va_list
+#include <stdio.h>
+#include <string.h>
 
 namespace spp
 {
@@ -10,7 +12,7 @@ namespace spp
 	enum PrintMode
 	{
 		#ifdef _WIN32
-		kPrintNormal = 0x7,
+		kPrintNormal = 0xF,
 		#else
 		kPrintNormal = 0x7,
 		#endif
@@ -28,8 +30,16 @@ namespace spp
 		#endif
 	};
 	
-	/// Returns the number of characters written
+	// Both return the number of characters written.
 	int printf(PrintMode printMode, const char *fmt, ...);
+	int vprintf(PrintMode printMode, const char *fmt, va_list args);
+	
+	// Reads a line, returning back str. If displayHeader == true, preprends the line with kUserInputHeader.
+	char* gets(char* str, size_t n, int displayHeader = true);
+	
+	// Runs a script, returning its sid, or fails and returns -1.
+	int runscript(const char* script, int argc, const char** argv);
+	
 }
 
 #endif //STEAMPLUS_H

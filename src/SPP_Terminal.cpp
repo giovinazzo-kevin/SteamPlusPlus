@@ -13,7 +13,7 @@ void setTerminalColor( int fgc )
 	HANDLE hstdout = GetStdHandle( STD_OUTPUT_HANDLE );
 	SetConsoleTextAttribute( hstdout, fgc );
 	#else
-	printf("\033[%dm", fgc);
+	printf("\033[3%dm", fgc);
 	#endif
 }
 

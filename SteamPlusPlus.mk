@@ -38,7 +38,7 @@ MakeDirCommand         :=makedir
 RcCmpOptions           := 
 RcCompilerName         :=K:/MinGW/bin/windres.exe
 LinkOptions            :=  
-IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch)include $(IncludeSwitch)lua-5.3.1/include $(IncludeSwitch)opensteamworks/include 
+IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch)include $(IncludeSwitch)lua-5.3.1/include $(IncludeSwitch)mingw-threads/include 
 IncludePCH             := 
 RcIncludePath          := 
 Libs                   := $(LibrarySwitch)lua $(LibrarySwitch)steamclient 
@@ -52,7 +52,7 @@ LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)lua-5.3.1/li
 AR       := K:/MinGW/bin/ar.exe rcu
 CXX      := K:/MinGW/bin/g++.exe
 CC       := K:/MinGW/bin/gcc.exe
-CXXFLAGS :=  -g -O2 -Wall -std=c++11  $(Preprocessors)
+CXXFLAGS :=  -g -O2 -Wall -std=c++11 -isystem opensteamworks/include  $(Preprocessors)
 CFLAGS   :=  -g -O2 -Wall $(Preprocessors)
 ASFLAGS  := 
 AS       := K:/MinGW/bin/as.exe
@@ -62,7 +62,7 @@ AS       := K:/MinGW/bin/as.exe
 ## User defined environment variables
 ##
 CodeLiteDir:=D:\Program Files\CodeLite
-Objects0=$(IntermediateDirectory)/src_SPP_Terminal.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_SPP_Script.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_Main.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_SPP_SteamPlusPlus.cpp$(ObjectSuffix) 
+Objects0=$(IntermediateDirectory)/src_SPP_Terminal.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_SPP_Script.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_Main.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_SPP_SteamPlusPlus.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_SPP_Lua.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_SPP_OpenSteamworks.cpp$(ObjectSuffix) 
 
 
 
@@ -120,6 +120,22 @@ $(IntermediateDirectory)/src_SPP_SteamPlusPlus.cpp$(DependSuffix): src/SPP_Steam
 
 $(IntermediateDirectory)/src_SPP_SteamPlusPlus.cpp$(PreprocessSuffix): src/SPP_SteamPlusPlus.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_SPP_SteamPlusPlus.cpp$(PreprocessSuffix) "src/SPP_SteamPlusPlus.cpp"
+
+$(IntermediateDirectory)/src_SPP_Lua.cpp$(ObjectSuffix): src/SPP_Lua.cpp $(IntermediateDirectory)/src_SPP_Lua.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "D:/Workspaces/CodeLite/C++/SteamPlusPlus/src/SPP_Lua.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_SPP_Lua.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_SPP_Lua.cpp$(DependSuffix): src/SPP_Lua.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/src_SPP_Lua.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/src_SPP_Lua.cpp$(DependSuffix) -MM "src/SPP_Lua.cpp"
+
+$(IntermediateDirectory)/src_SPP_Lua.cpp$(PreprocessSuffix): src/SPP_Lua.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_SPP_Lua.cpp$(PreprocessSuffix) "src/SPP_Lua.cpp"
+
+$(IntermediateDirectory)/src_SPP_OpenSteamworks.cpp$(ObjectSuffix): src/SPP_OpenSteamworks.cpp $(IntermediateDirectory)/src_SPP_OpenSteamworks.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "D:/Workspaces/CodeLite/C++/SteamPlusPlus/src/SPP_OpenSteamworks.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_SPP_OpenSteamworks.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_SPP_OpenSteamworks.cpp$(DependSuffix): src/SPP_OpenSteamworks.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/src_SPP_OpenSteamworks.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/src_SPP_OpenSteamworks.cpp$(DependSuffix) -MM "src/SPP_OpenSteamworks.cpp"
+
+$(IntermediateDirectory)/src_SPP_OpenSteamworks.cpp$(PreprocessSuffix): src/SPP_OpenSteamworks.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_SPP_OpenSteamworks.cpp$(PreprocessSuffix) "src/SPP_OpenSteamworks.cpp"
 
 
 -include $(IntermediateDirectory)/*$(DependSuffix)

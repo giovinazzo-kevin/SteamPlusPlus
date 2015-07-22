@@ -26,13 +26,13 @@ int spp::SteamPlusPlus::initializeScript(lua_State* L)
 	
 	lua_newtable(L);
 	
-	lua_pushcfunction(L, spp::lua::l_print);
+	lua_pushcfunction(L, lua::l_print);
 	lua_setfield(L, -2, "print");
 	
-	lua_pushcfunction(L, spp::lua::l_printerr);
+	lua_pushcfunction(L, lua::l_printerr);
 	lua_setfield(L, -2, "err");
 	
-	lua_pushcfunction(L, spp::lua::l_printinfo);
+	lua_pushcfunction(L, lua::l_printinfo);
 	lua_setfield(L, -2, "info");
 	
 	lua_setglobal(L, "spp");
@@ -47,14 +47,14 @@ static int _handleRuntimeError(lua_State* L, int ret)
 		case LUA_ERRRUN:
 			// Print additional information
 			spp::printf( spp::kPrintError, "%s\n", lua_tostring(L, -1) );
-			return spp::kE_Fail;
+			return spp::k_EFail;
 		case LUA_ERRERR:
 			spp::printf(spp::kPrintError, "An error occurred while trying to handle an error. Yo, dawg...\n");
-			return spp::kE_Fail;
+			return spp::k_EFail;
 		case LUA_ERRMEM:
-			return spp::kE_Memory;
+			return spp::k_EMemory;
 		default:
-			return spp::kE_Unknown;
+			return spp::k_EUnknown;
 	}
 }
 
@@ -63,22 +63,22 @@ static int _handleCompileTimeError(lua_State* L, int ret)
 	switch(ret)
 	{
 		case LUA_ERRFILE:
-			return spp::kE_FileNotFound;
+			return spp::k_EFileNotFound;
 		case LUA_ERRSYNTAX:
 			// Print additional information
 			spp::printf( spp::kPrintError, "%s\n", lua_tostring(L, -1) );
-			return spp::kE_Fail;
+			return spp::k_EFail;
 		case LUA_ERRMEM:
-			return spp::kE_Memory;
+			return spp::k_EMemory;
 		default:
-			return spp::kE_Unknown;
+			return spp::k_EUnknown;
 	}
 }
 
 int spp::SteamPlusPlus::runScript(const char* script, int argc, const char** argv, int* retcode)
 {
 	if(!m_initialized) {
-		return kE_Uninitialized;
+		return k_EUninitialized;
 	}
 	
 	lua_State* L;
@@ -122,7 +122,7 @@ int spp::SteamPlusPlus::runScript(const char* script, int argc, const char** arg
 		lua_settable(L, -3); // Put value at index and pop them off the stack
 	}
 	// Pass two arguments (argc and the argv table) and expect one returned value (exit code)
-	ret = lua_pcall(L, 2, 1, 0); 
+	ret = lua_pcall(L, 2, 1, 0);
 	if( ret != 0 ) {
 		return _handleRuntimeError(L, ret);
 	}
@@ -130,41 +130,21 @@ int spp::SteamPlusPlus::runScript(const char* script, int argc, const char** arg
 	*retcode = lua_tonumber(L, -1);
 	lua_pop(L, 1);
 	
-	return kE_OK;
+	return k_EOK;
 }
 
 int spp::SteamPlusPlus::killScript(const char* script)
 {
 	if(!m_initialized) {
-		return kE_Uninitialized;
+		return k_EUninitialized;
 	}
 	
-	if( m_scripts[script] ) {
+	if( m_scripts.find(script) != m_scripts.end() ) {
 		lua_close( m_scripts[script] );
-		return spp::kE_OK;
+		m_scripts.erase(script);
+		return k_EOK;
 	}
 	else {
-		return spp::kE_FileNotFound;
+		return k_EFileNotFound;
 	}
-}
-
-int spp::lua::l_print(lua_State* L)
-{
-	const char* message = lua_tostring(L, 1);
-	spp::printf(spp::kPrintNormal, message);
-	return 0;
-}
-
-int spp::lua::l_printerr(lua_State* L)
-{
-	const char* message = lua_tostring(L, 1);
-	spp::printf(spp::kPrintError, message);
-	return 0;
-}
-
-int spp::lua::l_printinfo(lua_State* L)
-{
-	const char* message = lua_tostring(L, 1);
-	spp::printf(spp::kPrintInfo, message);
-	return 0;
 }

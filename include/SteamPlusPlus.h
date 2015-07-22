@@ -12,6 +12,14 @@ extern "C" {
 #include <string.h>
 #include <unordered_map>
 
+#include "Steamworks.h"
+
+#ifdef _WIN32
+#define sleep(x) Sleep( (x) )
+#else
+#define sleep(x) usleep( (x) * 1000 )
+#endif
+
 namespace spp
 {
 /** An argument that must be passed to functions like spp::printf(), determines the color and meaning of the outputted text. */
@@ -45,12 +53,12 @@ enum PrintMode {
 /**  Error codes that will be thrown by an instance of the SteamPlusPlus class.*/
 enum ErrorCodes
 {
-	kE_OK = 0,           /** Everything went according to plan. Odd... */
-	kE_Fail,             /** Something really bad happened. */
-	kE_Uninitialized,    /** The SteamPlusPlus object has not been initialized. */
-	kE_FileNotFound,     /** The requested file was not found. */
-	kE_Memory,           /** For errors relative to memory allocation and deallocation. */
-	kE_Unknown           /** Something that should be used sparingly. */
+	k_EOK = 0,           /** Everything went according to plan. Odd... */
+	k_EFail,             /** Something really bad happened. */
+	k_EUninitialized,    /** The SteamPlusPlus object has not been initialized. */
+	k_EFileNotFound,     /** The requested file was not found. */
+	k_EMemory,           /** For errors relative to memory allocation and deallocation. */
+	k_EUnknown           /** Something that should be used sparingly. */
 };
 
 /**
@@ -82,14 +90,36 @@ char* gets(char* str, size_t n, bool displayHeader = true);
 class SteamPlusPlus
 {
 	private:
-	bool m_initialized = true;
-	/** Maps each lua_State to the name of the script it originated from. */
-	std::unordered_map<const char*, lua_State*> m_scripts;
+	bool m_initialized = false;
+	bool m_running = true;
 	
-	/** Creates the global symbols available to each script. */
+	HSteamPipe m_hPipe;
+	HSteamUser m_hUser;
+	CSteamAPILoader		m_steamLoader;
+	ISteamClient017 * 	m_pSteamClient;
+	//IClientFriends*		m_pClientFriends;
+	ISteamUser017* 		m_pSteamUser;
+	ISteamFriends015* 	m_pSteamFriends;
+	
+	/** Maps each lua_State to the name of the script it originated from. Scripts are sandboxed from each other. */
+	std::unordered_map<std::string, lua_State*> m_scripts;
+	
+	/** Creates the global symbols available to each script and does other initializations. */
 	int initializeScript(lua_State* L);
+	
 	public:
 	~SteamPlusPlus();
+	
+	bool isRunning();
+
+	int initSteamworks();
+	void cleanupSteamworks();
+	
+	HSteamPipe getSteamPipe() { return m_hPipe; }
+	HSteamUser getSteamUser() { return m_hUser; }
+	ISteamClient017*  getISteamClient()  { return m_pSteamClient; }
+	ISteamUser017*    getISteamUser()    { return m_pSteamUser; }
+	ISteamFriends015* getISteamFriends() { return m_pSteamFriends; }
 
 	/**
 	 * @brief Runs a script.
@@ -131,6 +161,11 @@ class SteamPlusPlus
 		 * @brief Prints a string in kPrintInfo mode.
 		 */
 		int l_printinfo(lua_State* L);
+		
+		/**
+		 * @brief Returns a list of files in the scripts folder and its subfolders.
+		 */
+		int l_ls(lua_State* L);
 		
 	}
 }

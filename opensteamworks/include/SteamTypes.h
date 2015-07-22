@@ -31,9 +31,9 @@
 #elif defined(__GNUC__)
 
 	#if defined(_WIN32)
-		#if (__GNUC__ < 4 || __GNUC_MINOR__ < 6) && !defined(_S4N_)
-			#error "OpenSteamworks requires GCC 4.6 or better on windows"
-		#endif
+		//#if (__GNUC__ < 4 || __GNUC_MINOR__ < 6) && !defined(_S4N_) Why don't you recognize GCC 5.1?
+			//#error "OpenSteamworks requires GCC 4.6 or better on windows"
+		//#endif
 	#elif defined(__linux__) || defined(__APPLE_CC__)
 		#if __GNUC__ < 4
 			#error "OpenSteamworks requires GCC 4.X (4.2 or 4.4 have been tested)"
@@ -83,8 +83,10 @@
 
 
 #ifdef __GNUC__
-	typedef unsigned int errno_t;
-	
+	#ifndef _ERRCODE_DEFINED
+		typedef unsigned int errno_t;
+	#endif	
+
 	#ifdef _S4N_
 		typedef unsigned int size_t;
 		#define NULL 0

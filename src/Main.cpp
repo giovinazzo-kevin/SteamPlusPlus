@@ -39,9 +39,10 @@ void runInputLoop(spp::SteamPlusPlus& client)
 		
 		// Try to run the script, passing it the arguments
 		// Please note that arguments are passed exactly like in C and C++, with the name of the executable being the first argument.
-		int ret = client.runScript(pathBuf, argc, &argList[0]);
+		int exitCode;
+		int ret = client.runScript(pathBuf, argc, &argList[0], &exitCode);
 		if(ret != spp::kE_OK) {
-			spp::printf(spp::kPrintNormal, "(%d) ", ret);
+			client.killScript(pathBuf);
 			switch(ret)
 			{
 				case spp::kE_Uninitialized:
@@ -58,9 +59,11 @@ void runInputLoop(spp::SteamPlusPlus& client)
 				break;
 				// Any other error should speak for itself through an error handler. Should...
 				default:
-					spp::printf(spp::kPrintError, "Aborting due to previous error.\n");
+					spp::printf(spp::kPrintError, "Aborting due to previous error (%d).\n", ret);
 				break;
 			}
+		} else {
+			spp::printf(spp::kPrintBoring, "Script quit with exit code (%d).\n", exitCode);
 		}
     }
 }

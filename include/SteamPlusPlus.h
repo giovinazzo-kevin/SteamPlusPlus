@@ -30,9 +30,9 @@ enum PrintMode {
 #endif
 
 #ifdef _WIN32
-    kPrintBoring = 0x7, /** Reserved for the gets function. */
+    kPrintBoring = 0x7, /** Prints information in a non-flashy color. */
 #else
-    kPrintBoring = 37, /** Reserved for the gets function. */
+    kPrintBoring = 37, /** Prints information in a non-flashy color. */
 #endif
 
 #ifdef _WIN32
@@ -87,7 +87,7 @@ class SteamPlusPlus
 	std::unordered_map<const char*, lua_State*> m_scripts;
 	
 	/** Creates the global symbols available to each script. */
-	int createGlobals(lua_State* L);
+	int initializeScript(lua_State* L);
 	public:
 	~SteamPlusPlus();
 
@@ -96,6 +96,7 @@ class SteamPlusPlus
 	 * @param script The relative path to the script.
 	 * @param argc The number of arguments to pass to the script.
 	 * @param argv The list of arguments to pass to the script. It should be of length argc and the first argument should be equivalent to its name.
+	 * @param retcode The return code of the script.
 	 * @return kE_OK 				on success,
 	 *         kE_Fail 				on generic failures (which are documented by an error handler),
 	 *         kE_FileNotFound		if the script wasn't found, 
@@ -103,7 +104,7 @@ class SteamPlusPlus
 	 *         kE_Uninitialized		if OpenSteamworks or the LUA Engine have not been loaded,
 	 *         kE_Unknown			welp.
 	 */
-	int runScript(const char* script, int argc, const char** argv);
+	int runScript(const char* script, int argc, const char** argv, int* retcode);
 	
 	/**
 	 * @brief Kills a script and detaches any hooks it originally had created.

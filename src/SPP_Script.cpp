@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "SteamPlusPlus.h"
 
 /*
@@ -34,6 +36,12 @@ int spp::SteamPlusPlus::initializeScript(lua_State* L)
 	
 	lua_pushcfunction(L, lua::l_printinfo);
 	lua_setfield(L, -2, "info");
+	
+	lua_pushcfunction(L, lua::l_registercback);
+	lua_setfield(L, -2, "registerCallback");
+	
+	lua_pushcfunction(L, lua::l_unregistercback);
+	lua_setfield(L, -2, "unregisterCallback");
 	
 	lua_setglobal(L, "spp");
 	
@@ -146,5 +154,61 @@ int spp::SteamPlusPlus::killScript(const char* script)
 	}
 	else {
 		return k_EFileNotFound;
+	}
+}
+
+int spp::SteamPlusPlus::registerCallback(int cbID, lua_State* L, const char* cbname)
+{
+	// Callback already registered from this script.
+	if( m_callbacks.find(cbID) != m_callbacks.end() ) {
+		auto *v = &m_callbacks[cbID];
+		for(auto it = v->begin(); it != v->end(); ++it)
+		{
+			if(it->first == L) {
+				return k_EFail;
+			}
+		}
+	}
+
+	m_callbacks[cbID].push_back( std::pair<lua_State*, std::string>(L, cbname) );
+	return k_EOK;
+}
+
+int spp::SteamPlusPlus::unregisterCallback(int cbID, lua_State* L)
+{
+	// Callback not registered from any script
+	if( m_callbacks.find(cbID) == m_callbacks.end() ) { 
+		return k_EFail;
+	}
+	
+	auto *v = &m_callbacks[cbID];
+	for(auto it = v->begin(); it != v->end(); ++it)
+	{
+		if( it->first == L ) {
+			v->erase(it);
+			return k_EOK;
+		}
+	}
+	
+	// Callback not registered from this particular script
+	return k_EFail;
+}
+
+void spp::SteamPlusPlus::fireCallbacks(int cbID, int cubParam, uint8* pubParam)
+{
+	auto *v = &m_callbacks[cbID];
+	for(auto it = v->begin(); it != v->end(); ++it)
+	{
+		auto L = it->first;
+		
+		lua_getglobal(L, it->second.c_str());
+		lua_pushnumber(L, cubParam);
+		lua_pushlightuserdata(L, (void *)pubParam);
+		
+		int ret = lua_pcall(L, 2, 1, 0);
+		if( ret != 0 ) {
+			_handleRuntimeError(L, ret);
+			spp::printf( spp::kPrintError, "[%s] An error occurred while firing the callback (%d).", it->second.c_str(), ret);
+		}
 	}
 }

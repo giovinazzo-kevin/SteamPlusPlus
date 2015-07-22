@@ -1,5 +1,7 @@
+#include <mutex>
 #include "SteamPlusPlus.h"
 
+static std::mutex running_mtx;
 
 spp::SteamPlusPlus::~SteamPlusPlus()
 {
@@ -13,5 +15,8 @@ spp::SteamPlusPlus::~SteamPlusPlus()
 
 bool spp::SteamPlusPlus::isRunning()
 {
-	return true;
+	running_mtx.lock();
+	bool ret = m_initialized;
+	running_mtx.unlock();
+	return ret;
 }

@@ -11,6 +11,7 @@ extern "C" {
 #include <stdio.h>
 #include <string.h>
 #include <unordered_map>
+#include <vector>
 
 #include "Steamworks.h"
 
@@ -103,6 +104,8 @@ class SteamPlusPlus
 	
 	/** Maps each lua_State to the name of the script it originated from. Scripts are sandboxed from each other. */
 	std::unordered_map<std::string, lua_State*> m_scripts;
+	/** Maps each callback id to a vector of pairs of lua_States and strings which represent the LUA function to be called. */
+	std::unordered_map<int, std::vector<std::pair<lua_State*, std::string>>> m_callbacks;
 	
 	/** Creates the global symbols available to each script and does other initializations. */
 	int initializeScript(lua_State* L);
@@ -146,6 +149,28 @@ class SteamPlusPlus
 	 *         kE_Unknown			welp.
 	 */
 	int killScript(const char* script);
+	
+	/**
+	 * @brief Registers a LUA callback that fires whenever the given event is intercepted.
+	 * @param cbID The event to intercept.
+	 * @param L The lua_State that will get its callback called.
+	 * @param cbname The name of the LUA function that defines the callback.
+	 * @return k_EOK on success, k_EFail on failure (callback already registered?).
+	 */
+	int registerCallback(int cbID, lua_State* L, const char* cbname);
+	
+	/**
+	 * @brief Unregisters a previously registered LUA callback.
+	 * @param cbID The event to unregister.
+	 * @param L The lua_State.
+	 * @return k_EOK on success, k_EFail on failure (callback not registered?).
+	 */
+	int unregisterCallback(int cbID, lua_State* L);
+	
+	/**
+	 * @brief Fires any callback associated with the given cbID.
+	 */
+	void fireCallbacks(int cbID, int cubParam, uint8* pubParam);
 };
 	namespace lua
 	{
@@ -161,11 +186,15 @@ class SteamPlusPlus
 		 * @brief Prints a string in kPrintInfo mode.
 		 */
 		int l_printinfo(lua_State* L);
-		
 		/**
-		 * @brief Returns a list of files in the scripts folder and its subfolders.
+		 * @brief Registers a callback that fires when the passed message is intercepted.
 		 */
-		int l_ls(lua_State* L);
+		int l_registercback(lua_State* L);
+		/**
+		 * @brief Unregisters a previously registered callback.
+		 * @brief Unregisters a previously registered callback.
+		 */
+		int l_unregistercback(lua_State* L);
 		
 	}
 }

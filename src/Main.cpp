@@ -42,7 +42,6 @@ void runInputLoop(spp::SteamPlusPlus& client)
 			spp::printf(spp::kPrintNormal, "(%d) ", ret);
 			switch(ret)
 			{
-				// Any error that does not appear here should speak for itself through an error handler. Should...
 				case spp::kE_Uninitialized:
 					spp::printf(spp::kPrintError, "The SteamPlusPlus object is uninitialized.\n");
 				break;
@@ -55,14 +54,11 @@ void runInputLoop(spp::SteamPlusPlus& client)
 				case spp::kE_Unknown:
 					spp::printf(spp::kPrintError, "Unknown error.\n");
 				break;
+				// Any other error should speak for itself through an error handler. Should...
+				default:
+					spp::printf(spp::kPrintError, "Aborting due to previous error.\n");
+				break;
 			}
-			/* This additional newline is here for two reasons: 
-			 * 1. The error handler didn't print anything and we'd get something like
-			 * 		[Steam++]# test.lua
-			 * 		(1) [Steam++]# oh no
-			 * 2. It separates visually the error and makes it easier to read.
-			 */
-			spp::printf(spp::kPrintNormal, "\n");
 		}
     }
 }
@@ -80,7 +76,6 @@ int main(int argc, char** argv)
 	
 	//std::thread sclThread(runScriptCallbackLoop, client);
 	runInputLoop(client);
-	
 	//sclThread.join();
     return 0;
 }

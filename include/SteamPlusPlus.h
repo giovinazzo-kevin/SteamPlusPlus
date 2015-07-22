@@ -20,19 +20,25 @@ enum PrintMode {
 #ifdef _WIN32
     kPrintNormal = 0xF, /** Standard print mode, used for mundane messages. */
 #else
-    kPrintNormal = 0x7, /** Standard print mode, used for mundane messages. */
+    kPrintNormal = 97, /** Standard print mode, used for mundane messages. */
 #endif
 
 #ifdef _WIN32
     kPrintError = 0xC, /** Error print mode, used for error messages. */
 #else
-    kPrintError = 0x1, /** Error print mode, used for error messages. */
+    kPrintError = 91, /** Error print mode, used for error messages. */
+#endif
+
+#ifdef _WIN32
+    kPrintBoring = 0x7, /** Reserved for the gets function. */
+#else
+    kPrintBoring = 37, /** Reserved for the gets function. */
 #endif
 
 #ifdef _WIN32
     kPrintInfo = 0xE /** Info print mode, used for notifying the user about important things. */ 
 #else
-    kPrintInfo = 0x3 /** Info print mode, used for notifying the user about important things. */
+    kPrintInfo = 93 /** Info print mode, used for notifying the user about important things. */
 #endif
 };
 
@@ -77,9 +83,11 @@ class SteamPlusPlus
 {
 	private:
 	bool m_initialized = true;
-	
 	/** Maps each lua_State to the name of the script it originated from. */
 	std::unordered_map<const char*, lua_State*> m_scripts;
+	
+	/** Creates the global symbols available to each script. */
+	int createGlobals(lua_State* L);
 	public:
 	~SteamPlusPlus();
 
@@ -107,9 +115,23 @@ class SteamPlusPlus
 	 *         kE_Unknown			welp.
 	 */
 	int killScript(const char* script);
-	
 };
-
+	namespace lua
+	{
+		/**
+		 * @brief Prints a string in kPrintNormal mode.
+		 */
+		int l_print(lua_State* L);
+		/**
+		 * @brief Prints a string in kPrintError mode.
+		 */
+		int l_printerr(lua_State* L);
+		/**
+		 * @brief Prints a string in kPrintInfo mode.
+		 */
+		int l_printinfo(lua_State* L);
+		
+	}
 }
 
 #endif // STEAMPLUS_H

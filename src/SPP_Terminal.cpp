@@ -13,7 +13,7 @@ void setTerminalColor(int fgc)
     SetConsoleTextAttribute(hstdout, fgc);
 #else
 	// On UNIX, use the ANSI character sequence for coloring foreground text.
-    printf("\033[3%dm", fgc);
+    printf("\033[%dm", fgc);
 #endif
 }
 
@@ -45,6 +45,7 @@ int spp::printf(PrintMode printMode, const char* fmt, ...)
 
 char* spp::gets(char* str, size_t n, bool displayHeader)
 {
+	setTerminalColor(spp::kPrintBoring);
     if(displayHeader) {
 		fputs("[Steam++]# ", stdout);
 	}
@@ -54,5 +55,6 @@ char* spp::gets(char* str, size_t n, bool displayHeader)
     if(str[pos] == '\n') {
 		str[pos] = '\0';
 	}
+	setTerminalColor(spp::kPrintNormal);
     return str;
 }

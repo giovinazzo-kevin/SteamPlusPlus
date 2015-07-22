@@ -19,17 +19,18 @@ void setTerminalColor(int fgc)
 
 int spp::vprintf(PrintMode printMode, const char* fmt, va_list args)
 {
+	FILE* stream = stdout;
     setTerminalColor(printMode);
 	switch(printMode)
 	{
 		case kPrintError:
 			::printf("ERROR: ");
+			stream = stderr;
 		break;
-		case kPrintInfo:
-		case kPrintNormal:
+		default:
 		break;
 	}
-    int ret = ::vprintf(fmt, args);
+    int ret = ::vfprintf(stream, fmt, args);
     setTerminalColor(spp::kPrintNormal);
     return ret;
 }

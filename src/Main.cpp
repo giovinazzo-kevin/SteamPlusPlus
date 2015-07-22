@@ -17,7 +17,7 @@ const char* kScriptsFolderPath = "scripts/";
 void runInputLoop(spp::SteamPlusPlus& client)
 {
 	char inbuf[kInputBufferSize];
-    while( client.isRunning() ) {
+	while( client.isRunning() ) {
 		// Ask the user to input something
 		spp::gets(inbuf, kInputBufferSize, true);
 		
@@ -74,7 +74,7 @@ void runInputLoop(spp::SteamPlusPlus& client)
 		} else {
 			spp::printf(spp::kPrintBoring, "Script quit with exit code (%d).\n", exitCode);
 		}
-    }
+	}
 }
 
 
@@ -101,11 +101,11 @@ int main(int argc, char** argv)
 {
 	spp::SteamPlusPlus client;
 	
-    spp::printf(spp::kPrintBoring, "Initializing Steamworks...\n");
+	spp::printf(spp::kPrintBoring, "Initializing Steamworks...\n");
 	if( client.initSteamworks() != spp::k_EOK ) {
 		return 1;
 	}
-    spp::printf(spp::kPrintInfo, "Welcome to Steam++!\n");
+	spp::printf(spp::kPrintInfo, "Welcome to Steam++!\n");
 	
 	std::thread cbthread(runCallbackLoop, client);
 	runInputLoop(client);

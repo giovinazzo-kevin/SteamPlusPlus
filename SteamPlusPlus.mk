@@ -38,7 +38,7 @@ MakeDirCommand         :=makedir
 RcCmpOptions           := 
 RcCompilerName         :=K:/MinGW/bin/windres.exe
 LinkOptions            :=  
-IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch)include 
+IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch)include $(IncludeSwitch)lua-5.3.1/include 
 IncludePCH             := 
 RcIncludePath          := 
 Libs                   := $(LibrarySwitch)lua 
@@ -62,7 +62,7 @@ AS       := K:/MinGW/bin/as.exe
 ## User defined environment variables
 ##
 CodeLiteDir:=D:\Program Files\CodeLite
-Objects0=$(IntermediateDirectory)/src_SPP_Terminal.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_MainLoop.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_SPP_Script.cpp$(ObjectSuffix) 
+Objects0=$(IntermediateDirectory)/src_SPP_Terminal.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_SPP_Script.cpp$(ObjectSuffix) $(IntermediateDirectory)/src_Main.cpp$(ObjectSuffix) 
 
 
 
@@ -97,14 +97,6 @@ $(IntermediateDirectory)/src_SPP_Terminal.cpp$(DependSuffix): src/SPP_Terminal.c
 $(IntermediateDirectory)/src_SPP_Terminal.cpp$(PreprocessSuffix): src/SPP_Terminal.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_SPP_Terminal.cpp$(PreprocessSuffix) "src/SPP_Terminal.cpp"
 
-$(IntermediateDirectory)/src_MainLoop.cpp$(ObjectSuffix): src/MainLoop.cpp $(IntermediateDirectory)/src_MainLoop.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "D:/Workspaces/CodeLite/C++/SteamPlusPlus/src/MainLoop.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_MainLoop.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/src_MainLoop.cpp$(DependSuffix): src/MainLoop.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/src_MainLoop.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/src_MainLoop.cpp$(DependSuffix) -MM "src/MainLoop.cpp"
-
-$(IntermediateDirectory)/src_MainLoop.cpp$(PreprocessSuffix): src/MainLoop.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_MainLoop.cpp$(PreprocessSuffix) "src/MainLoop.cpp"
-
 $(IntermediateDirectory)/src_SPP_Script.cpp$(ObjectSuffix): src/SPP_Script.cpp $(IntermediateDirectory)/src_SPP_Script.cpp$(DependSuffix)
 	$(CXX) $(IncludePCH) $(SourceSwitch) "D:/Workspaces/CodeLite/C++/SteamPlusPlus/src/SPP_Script.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_SPP_Script.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/src_SPP_Script.cpp$(DependSuffix): src/SPP_Script.cpp
@@ -112,6 +104,14 @@ $(IntermediateDirectory)/src_SPP_Script.cpp$(DependSuffix): src/SPP_Script.cpp
 
 $(IntermediateDirectory)/src_SPP_Script.cpp$(PreprocessSuffix): src/SPP_Script.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_SPP_Script.cpp$(PreprocessSuffix) "src/SPP_Script.cpp"
+
+$(IntermediateDirectory)/src_Main.cpp$(ObjectSuffix): src/Main.cpp $(IntermediateDirectory)/src_Main.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "D:/Workspaces/CodeLite/C++/SteamPlusPlus/src/Main.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/src_Main.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/src_Main.cpp$(DependSuffix): src/Main.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/src_Main.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/src_Main.cpp$(DependSuffix) -MM "src/Main.cpp"
+
+$(IntermediateDirectory)/src_Main.cpp$(PreprocessSuffix): src/Main.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/src_Main.cpp$(PreprocessSuffix) "src/Main.cpp"
 
 
 -include $(IntermediateDirectory)/*$(DependSuffix)

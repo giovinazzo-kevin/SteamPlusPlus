@@ -1,1 +1,1 @@
-./Debug/src_SPP_Terminal.cpp.o ./Debug/src_MainLoop.cpp.o ./Debug/src_SPP_Script.cpp.o   
+./Debug/src_SPP_Terminal.cpp.o ./Debug/src_SPP_Script.cpp.o ./Debug/src_Main.cpp.o   

@@ -39,9 +39,12 @@ enum PrintMode {
 /**  Error codes that will be thrown by an instance of the SteamPlusPlus class.*/
 enum ErrorCodes
 {
-	kE_OK = 0,
-	kE_Uninitialized, /** OpenSteamworks or the LUA Engine have not been initialized. */
-	kE_FileNotFound /** The requested file was not found. */
+	kE_OK = 0,           /** Everything went according to plan. Odd... */
+	kE_Fail,             /** Something really bad happened. */
+	kE_Uninitialized,    /** The SteamPlusPlus object has not been initialized. */
+	kE_FileNotFound,     /** The requested file was not found. */
+	kE_Memory,           /** For errors relative to memory allocation and deallocation. */
+	kE_Unknown           /** Something that should be used sparingly. */
 };
 
 /**
@@ -72,20 +75,38 @@ char* gets(char* str, size_t n, bool displayHeader = true);
 /**This class wraps the OpenSteamworks API and the LUA interpreter together.*/
 class SteamPlusPlus
 {
-private:
-	bool m_initialized = false;
+	private:
+	bool m_initialized = true;
 	
 	/** Maps each lua_State to the name of the script it originated from. */
 	std::unordered_map<const char*, lua_State*> m_scripts;
-public:
+	public:
+	~SteamPlusPlus();
+
 	/**
 	 * @brief Runs a script.
 	 * @param script The relative path to the script.
 	 * @param argc The number of arguments to pass to the script.
 	 * @param argv The list of arguments to pass to the script. It should be of length argc and the first argument should be equivalent to its name.
-	 * @return kE_Uninitialized if OpenSteamworks or the LUA Engine have not been loaded, or kE_FileNotFound if the script wasn't found.
+	 * @return kE_OK 				on success,
+	 *         kE_Fail 				on generic failures (which are documented by an error handler),
+	 *         kE_FileNotFound		if the script wasn't found, 
+	 *         kE_Memory			if lua_loadfile failed due to memory allocation problems,
+	 *         kE_Uninitialized		if OpenSteamworks or the LUA Engine have not been loaded,
+	 *         kE_Unknown			welp.
 	 */
 	int runScript(const char* script, int argc, const char** argv);
+	
+	/**
+	 * @brief Kills a script and detaches any hooks it originally had created.
+	 * @param script The name of the script to kill. 
+	 *        IMPORTANT: This is the name that was used to load the script, so if it was moved don't pass its new location.
+	 * @return kE_OK				on success,
+	 *         kE_FileNotFound		if an invalid path was passed,
+	 *         kE_Uninitialized		if OpenSteamworks or the LUA Engine have not been loaded,
+	 *         kE_Unknown			welp.
+	 */
+	int killScript(const char* script);
 	
 };
 

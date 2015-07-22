@@ -1,3 +1,10 @@
 SteamPlusPlus allows you to interact with the Steam Client via easy-to-write LUA scripts.
 
 You can use it to make chatbots, chat loggers, monitor your friends' activity programmatically and so on.
+
+IMPORTANT!
+==========
+
+This project is still in its early stages and may not compiled if cloned directly. I still have to write a proper makefile and test it on different platforms.
+
+Right now it should compile under MinGW on Windows, but I'm not assuring anything.

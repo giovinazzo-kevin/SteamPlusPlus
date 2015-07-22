@@ -38,12 +38,12 @@ MakeDirCommand         :=makedir
 RcCmpOptions           := 
 RcCompilerName         :=K:/MinGW/bin/windres.exe
 LinkOptions            :=  
-IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch)include $(IncludeSwitch)lua-5.3.1/include 
+IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch)include $(IncludeSwitch)lua-5.3.1/include $(IncludeSwitch)opensteamworks/include 
 IncludePCH             := 
 RcIncludePath          := 
-Libs                   := $(LibrarySwitch)lua 
-ArLibs                 :=  "lua" 
-LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)lua-5.3.1/lib/ 
+Libs                   := $(LibrarySwitch)lua $(LibrarySwitch)steamclient 
+ArLibs                 :=  "lua" "steamclient" 
+LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)lua-5.3.1/lib/ $(LibraryPathSwitch)opensteamworks/lib/ 
 
 ##
 ## Common variables

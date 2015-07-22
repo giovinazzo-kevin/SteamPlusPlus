@@ -14,8 +14,10 @@ void runInputLoop(spp::SteamPlusPlus& client)
 	char inbuf[kInputBufferSize];
     while(1) {
 		// Ask the user to input something
-		fflush(stdin);
 		spp::gets(inbuf, kInputBufferSize, true);
+		
+		// Flush the input buffer. fflush(stdin) yields undefined behaviour on input streams and shouldn't be used.
+		// char c_; while((c_ = getchar()) != '\n' && c_ != EOF); 
 
 		// Split the entered string into tokens, or arguments
 		std::vector<const char*> argList;

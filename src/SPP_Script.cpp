@@ -27,31 +27,37 @@ int spp::SteamPlusPlus::runScript(const char* script, int argc, const char** arg
 		return kE_Uninitialized;
 	}
 	
-	lua_State* L = m_scripts[script] = luaL_newstate();
-	// 		Step 1. Load file
-	int ret = luaL_loadfile(L, script);
-	if( ret != 0 ) {
-		killScript(script);
-		switch(ret)
-		{
-			case LUA_ERRFILE:
-				return kE_FileNotFound;
-			case LUA_ERRSYNTAX:
-				// Print additional information
-				spp::printf( kPrintError, "%s\n", lua_tostring(L, -1) );
-				return kE_Fail;
-			case LUA_ERRMEM:
-				return kE_Memory;
-			default:
-				return kE_Unknown;
+	lua_State* L = m_scripts[script];
+	
+	// If it's the first time running this script, create a new environment for it.
+	if(m_scripts.find(script) == m_scripts.end()) {
+		L = m_scripts[script] = luaL_newstate();
+		// 		Step 1. Load file
+		int ret = luaL_loadfile(L, script);
+		if( ret != 0 ) {
+			killScript(script);
+			switch(ret)
+			{
+				case LUA_ERRFILE:
+					return kE_FileNotFound;
+				case LUA_ERRSYNTAX:
+					// Print additional information
+					spp::printf( kPrintError, "%s\n", lua_tostring(L, -1) );
+					return kE_Fail;
+				case LUA_ERRMEM:
+					return kE_Memory;
+				default:
+					return kE_Unknown;
+			}
 		}
+		// 		Step 2. Create global symbols
+		createGlobals(L);
 	}
-	// 		Step 2. Create global symbols
-	createGlobals(L);
+	
 	// 		Step 3. Call the script's entry point
 	// TODO: Push init() function to the stack and call it passing argc and argv!!
 	// TODO: Create an error handler that prints the stack trace!
-	ret = lua_pcall(L, 0, 0, 0);
+	int ret = lua_pcall(L, 0, 0, 0);
 	if( ret != 0 ) {
 		killScript(script);
 		switch(ret)

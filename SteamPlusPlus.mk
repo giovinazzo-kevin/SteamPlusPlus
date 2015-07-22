@@ -43,7 +43,7 @@ IncludePCH             :=
 RcIncludePath          := 
 Libs                   := $(LibrarySwitch)lua $(LibrarySwitch)steamclient 
 ArLibs                 :=  "lua" "steamclient" 
-LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)lua-5.3.1/lib/ $(LibraryPathSwitch)opensteamworks/lib/ 
+LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)lua-5.3.1/lib/ $(LibraryPathSwitch)opensteamworks/lib/Win32/ 
 
 ##
 ## Common variables

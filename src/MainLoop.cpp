@@ -8,7 +8,7 @@
 const int kInputBufferSize = 512;
 
 //! Handles user input and is responsible for running scripts
-void runInputLoop()
+void runInputLoop(spp::SteamPlusPlus& client)
 {
 	char inbuf[kInputBufferSize];
     while(1) {
@@ -32,26 +32,38 @@ void runInputLoop()
 		
 		// Try to run the script, passing it the arguments
 		// Please note that arguments are passed exactly like in C and C++, with the name of the executable being the first argument.
-		int ret = spp::runScript(argList[0], argc, &argList[0]);
-		if(ret == -1) {
-			spp::printf(spp::kPrintError, "Script \"%s\" does not exist.\n", argList[0]);
+		int ret = client.runScript(argList[0], argc, &argList[0]);
+		if(ret != spp::kE_OK) {
+			switch(ret)
+			{
+				case spp::kE_Uninitialized:
+					spp::printf(spp::kPrintError, "The SteamPlusPlus object is uninitialized.\n");
+				break;
+				case spp::kE_FileNotFound:
+					spp::printf(spp::kPrintError, "Script \"%s\" does not exist.\n", argList[0]);
+				break;
+				default:
+					spp::printf(spp::kPrintError, "Unknown error. (%d)\n", ret);
+				break;
+			}
 		}
     }
 }
 
 //! Iterates each script and calls their callbacks whenever appropriate
-void runScriptCallbackLoop()
+void runScriptCallbackLoop(spp::SteamPlusPlus& client)
 {
 	
 }
 
 int main(int argc, char** argv)
 {
+	spp::SteamPlusPlus client;
     spp::printf(spp::kPrintInfo, "Welcome to Steam++!\n");
 	
-	std:thread sclThread(runScriptCallbackLoop);
-	runInputLoop();
+	//std::thread sclThread(runScriptCallbackLoop, client);
+	runInputLoop(client);
 	
-	sclThread.join();
+	//sclThread.join();
     return 0;
 }

@@ -1,7 +1,12 @@
 #include "SteamPlusPlus.h"
 
-int spp::runScript(const char* script, int argc, const char** argv)
+int spp::SteamPlusPlus::runScript(const char* script, int argc, const char** argv)
 {
+	if(!m_initialized) {
+		return kE_Uninitialized;
+	}
 	
-    return -1;
+	//m_scripts[script] = luaL_newstate();
+	
+    return kE_FileNotFound;
 }

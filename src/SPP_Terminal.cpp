@@ -5,8 +5,6 @@
 #include <windows.h>
 #endif
 
-const char* spp::kUserInputHeader = "[Steam++] ";
-
 void setTerminalColor(int fgc)
 {
 #ifdef _WIN32
@@ -22,6 +20,15 @@ void setTerminalColor(int fgc)
 int spp::vprintf(PrintMode printMode, const char* fmt, va_list args)
 {
     setTerminalColor(printMode);
+	switch(printMode)
+	{
+		case kPrintError:
+			::printf("ERROR: ");
+		break;
+		case kPrintInfo:
+		case kPrintNormal:
+		break;
+	}
     int ret = ::vprintf(fmt, args);
     setTerminalColor(spp::kPrintNormal);
     return ret;
@@ -36,10 +43,10 @@ int spp::printf(PrintMode printMode, const char* fmt, ...)
     return ret;
 }
 
-char* spp::gets(char* str, size_t n, int displayHeader)
+char* spp::gets(char* str, size_t n, bool displayHeader)
 {
     if(displayHeader) {
-		fputs(spp::kUserInputHeader, stdout);
+		fputs("[Steam++]# ", stdout);
 	}
     fgets(str, n, stdin);
     // Remove trailing newline, or don't if fgets returned because n was reached.

@@ -1,15 +1,19 @@
 #ifndef STEAMPLUS_H
 #define STEAMPLUS_H
 
+extern "C" {
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
+}
+
 #include <cstdarg> //va_list
 #include <stdio.h>
 #include <string.h>
+#include <unordered_map>
 
 namespace spp
 {
-extern const char* kUserInputHeader; //! This is the standard [Steam++] string that appears when an user is prompted to type.
-
-
 /** An argument that must be passed to functions like spp::printf(), determines the color and meaning of the outputted text. */
 enum PrintMode {
 // Since the way of handling character color varies across platforms, each mode has to be defined for both Windows and UNIX.
@@ -30,6 +34,14 @@ enum PrintMode {
 #else
     kPrintInfo = 0x3 /** Info print mode, used for notifying the user about important things. */
 #endif
+};
+
+/**  Error codes that will be thrown by an instance of the SteamPlusPlus class.*/
+enum ErrorCodes
+{
+	kE_OK = 0,
+	kE_Uninitialized, /** OpenSteamworks or the LUA Engine have not been initialized. */
+	kE_FileNotFound /** The requested file was not found. */
 };
 
 /**
@@ -55,17 +67,28 @@ int vprintf(PrintMode printMode, const char* fmt, va_list args);
  * @param displayHeader If true, preprends the line with kUserInputHeader.
  * @return str.
  */
-char* gets(char* str, size_t n, int displayHeader = true);
+char* gets(char* str, size_t n, bool displayHeader = true);
 
+/**This class wraps the OpenSteamworks API and the LUA interpreter together.*/
+class SteamPlusPlus
+{
+private:
+	bool m_initialized = false;
+	
+	/** Maps each lua_State to the name of the script it originated from. */
+	std::unordered_map<const char*, lua_State*> m_scripts;
+public:
+	/**
+	 * @brief Runs a script.
+	 * @param script The relative path to the script.
+	 * @param argc The number of arguments to pass to the script.
+	 * @param argv The list of arguments to pass to the script. It should be of length argc and the first argument should be equivalent to its name.
+	 * @return kE_Uninitialized if OpenSteamworks or the LUA Engine have not been loaded, or kE_FileNotFound if the script wasn't found.
+	 */
+	int runScript(const char* script, int argc, const char** argv);
+	
+};
 
-/**
- * @brief Runs a script.
- * @param script The relative path to the script.
- * @param argc The number of arguments to pass to the script.
- * @param argv The list of arguments to pass to the script. It should be of length argc and the first argument should be equivalent to its name.
- * @return -1 if the file is not found.
- */
-int runScript(const char* script, int argc, const char** argv);
 }
 
 #endif // STEAMPLUS_H

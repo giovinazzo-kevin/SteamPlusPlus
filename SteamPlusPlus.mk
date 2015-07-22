@@ -13,7 +13,7 @@ CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=Kappa
-Date                   :=20/07/2015
+Date                   :=22/07/2015
 CodeLitePath           :="D:\Program Files\CodeLite"
 LinkerName             :=K:/MinGW/bin/g++.exe
 SharedObjectLinkerName :=K:/MinGW/bin/g++.exe -shared -fPIC
@@ -41,9 +41,9 @@ LinkOptions            :=
 IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch)include 
 IncludePCH             := 
 RcIncludePath          := 
-Libs                   := $(LibrarySwitch)lua53 
-ArLibs                 :=  "lua53" 
-LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)lib 
+Libs                   := $(LibrarySwitch)lua 
+ArLibs                 :=  "lua" 
+LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)lua-5.3.1/lib/ 
 
 ##
 ## Common variables
@@ -52,7 +52,7 @@ LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)lib
 AR       := K:/MinGW/bin/ar.exe rcu
 CXX      := K:/MinGW/bin/g++.exe
 CC       := K:/MinGW/bin/gcc.exe
-CXXFLAGS :=  -g -O2 -Wall -std=c++11 $(Preprocessors)
+CXXFLAGS :=  -g -O2 -Wall -std=c++11  $(Preprocessors)
 CFLAGS   :=  -g -O2 -Wall $(Preprocessors)
 ASFLAGS  := 
 AS       := K:/MinGW/bin/as.exe

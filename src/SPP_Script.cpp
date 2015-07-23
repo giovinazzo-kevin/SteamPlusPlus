@@ -159,9 +159,31 @@ int spp::SteamPlusPlus::killScript(const char* script)
 		return k_EUninitialized;
 	}
 	
+	// If the passed script exists
 	if( m_scripts.find(script) != m_scripts.end() ) {
-		lua_close( m_scripts[script] );
+		// Iterate the callbacks map
+		for(auto p = m_callbacks.begin(); p != m_callbacks.end();)
+		{
+			auto value = p->second;
+			// And for each registered callback, iterate its vector of subscribers
+			for(auto it = value.begin(); it != value.end(); ++it)
+			{
+				// If the current subscriber equals the script we're killing, erase the <script, callback> pair
+				if( it->first == m_scripts[script] ) {
+					p = m_callbacks.erase(p);
+				} 
+				else {
+					p++;
+				}
+			}
+			
+		}
+		
+		// And then erase the script
 		m_scripts.erase(script);
+		// Finally, tell LUA to close the lua_State
+		lua_close( m_scripts[script] );
+		
 		return k_EOK;
 	}
 	else {

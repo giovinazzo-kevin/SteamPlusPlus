@@ -1,6 +1,8 @@
 #include <algorithm>
 
 #include "SteamPlusPlus.h"
+#include "SPP_Terminal.h"
+
 
 /*
 static int traceback (lua_State *L) 
@@ -37,13 +39,23 @@ int spp::SteamPlusPlus::initializeScript(lua_State* L)
 	lua_pushcfunction(L, lua::l_printinfo);
 	lua_setfield(L, -2, "info");
 	
+	lua_pushcfunction(L, lua::l_printboring);
+	lua_setfield(L, -2, "boring");
+	
 	lua_pushcfunction(L, lua::l_registercback);
 	lua_setfield(L, -2, "registerCallback");
 	
 	lua_pushcfunction(L, lua::l_unregistercback);
 	lua_setfield(L, -2, "unregisterCallback");
 	
+	lua_pushcfunction(L, lua::l_parsechatmsg);
+	lua_setfield(L, -2, "parseChatMsg");
+	
 	lua_setglobal(L, "spp");
+	
+	// Make sure to override print() as well or it'll break the terminal.
+	lua_pushcfunction(L, lua::l_print);
+	lua_setglobal(L, "print");
 	
 	return 0;
 }
@@ -202,13 +214,30 @@ void spp::SteamPlusPlus::fireCallbacks(int cbID, int cubParam, uint8* pubParam)
 		auto L = it->first;
 		
 		lua_getglobal(L, it->second.c_str());
-		lua_pushnumber(L, cubParam);
+		lua_pushinteger(L, cubParam);
 		lua_pushlightuserdata(L, (void *)pubParam);
 		
+		gets_mtx.lock();
+		// Delete the [Steam++] header.
+		if( headerDisplaying ) {
+			int hlen = strlen(header);
+			while(--hlen)
+			{
+				fputs("\b\b ", stdout);
+			}
+			fputc('\b', stdout);
+		}
+		// Let the callback fire and print whatever it wants
 		int ret = lua_pcall(L, 2, 1, 0);
+		// Re-print the header
+		setTerminalColor(spp::kPrintBoring);
+		fputs(header, stdout);
+		// And since the user is supposed to enter input, the color can remain kPrintBoring
+		gets_mtx.unlock();
+		
 		if( ret != 0 ) {
 			_handleRuntimeError(L, ret);
-			spp::printf( spp::kPrintError, "[%s] An error occurred while firing the callback (%d).", it->second.c_str(), ret);
+			spp::printf( spp::kPrintError, "[%s] An error occurred while firing the callback (%d).\n", it->second.c_str(), ret);
 		}
 	}
 }

@@ -187,14 +187,21 @@ class SteamPlusPlus
 		 */
 		int l_printinfo(lua_State* L);
 		/**
+		 * @brief Prints a string in kPrintBoring mode.
+		 */
+		int l_printboring(lua_State* L);
+		/**
 		 * @brief Registers a callback that fires when the passed message is intercepted.
 		 */
 		int l_registercback(lua_State* L);
 		/**
 		 * @brief Unregisters a previously registered callback.
-		 * @brief Unregisters a previously registered callback.
 		 */
 		int l_unregistercback(lua_State* L);
+		/**
+		 * @brief Parses a FriendChatMsg_t pointer.
+		 */
+		int l_parsechatmsg(lua_State* L);
 		
 	}
 }

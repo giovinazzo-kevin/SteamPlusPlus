@@ -1,24 +1,20 @@
 #include <stdio.h>
 #include <vector>
-#include <thread>
-#include <mutex>
 
 #include "Main.h"
 
-const int kInputBufferSize = 512;
 const char* kScriptsFolderPath = "scripts/";
 
-
-static spp::SteamPlusPlus client;
-static std::mutex client_mtx;
+spp::SteamPlusPlus sppClient;
+std::mutex sppClient_mtx;
 
 //! Handles user input and is responsible for running scripts
 void runInputLoop()
 {
-	char inbuf[kInputBufferSize];
-	while( client.isRunning() ) { // isRunning is false when the client is uninitialized so it's safe to call
+	char inbuf[BUFSIZ];
+	while( sppClient.isRunning() ) { // isRunning is false when the sppClient is uninitialized so it's safe to call
 		// Ask the user to input something
-		spp::gets(inbuf, kInputBufferSize, true);
+		spp::gets(inbuf, BUFSIZ, true);
 		
 		// Flush the input buffer. fflush(stdin) yields undefined behaviour on input streams and shouldn't be used.
 		// char c_; while((c_ = getchar()) != '\n' && c_ != EOF); 
@@ -48,13 +44,13 @@ void runInputLoop()
 		// Try to run the script, passing it the arguments
 		// Please note that arguments are passed exactly like in C and C++, with the name of the executable being the first argument.
 		int exitCode;
-		client_mtx.lock();
-		int ret = client.runScript(pathBuf, argc, &argList[0], &exitCode);
-		client_mtx.unlock();
+		sppClient_mtx.lock();
+		int ret = sppClient.runScript(pathBuf, argc, &argList[0], &exitCode);
+		sppClient_mtx.unlock();
 		if(ret != spp::k_EOK) {
-			client_mtx.lock();
-			client.killScript(pathBuf);
-			client_mtx.unlock();
+			sppClient_mtx.lock();
+			sppClient.killScript(pathBuf);
+			sppClient_mtx.unlock();
 			switch(ret)
 			{
 				case spp::k_EUninitialized:
@@ -85,14 +81,14 @@ void runCallbackLoop()
 {
 	CallbackMsg_t msg;
 	
-	while( client.isRunning() ) // isRunning is false when the client is uninitialized so it's safe to call
+	while( sppClient.isRunning() ) // isRunning is false when the sppClient is uninitialized so it's safe to call
 	{
-		while( Steam_BGetCallback( client.getSteamPipe(), &msg) )
+		while( Steam_BGetCallback( sppClient.getSteamPipe(), &msg) )
 		{
-			client_mtx.lock();
-			client.fireCallbacks( msg.m_iCallback, msg.m_cubParam, msg.m_pubParam );
-			client_mtx.unlock();
-			Steam_FreeLastCallback(client.getSteamPipe());
+			sppClient_mtx.lock();
+			sppClient.fireCallbacks( msg.m_iCallback, msg.m_cubParam, msg.m_pubParam );
+			sppClient_mtx.unlock();
+			Steam_FreeLastCallback(sppClient.getSteamPipe());
 		}
 		
 		sleep(100);
@@ -102,24 +98,14 @@ void runCallbackLoop()
 int main(int argc, char** argv)
 {
 	spp::printf(spp::kPrintNormal, "Initializing Steamworks...\n");
-	if( client.initSteamworks() != spp::k_EOK ) {
+	if( sppClient.initSteamworks() != spp::k_EOK ) {
 		return 1;
 	}
-	spp::printf(spp::kPrintNormal, "\nWelcome to Steam++!\n\n");
+	spp::printf(spp::kPrintNormal, "\nWelcome to Steam++!\n");
 	
 	std::thread cbthread(runCallbackLoop);
 	runInputLoop();
 	cbthread.join();
 	
     return 0;
-}
-
-int registerCallbackProxy(int cbID, lua_State* L, const char* cbname)
-{
-	return client.registerCallback(cbID, L, cbname);
-}
-
-int unregisterCallbackProxy(int cbID, lua_State* L)
-{
-	return client.unregisterCallback(cbID, L);
 }

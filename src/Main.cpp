@@ -45,11 +45,11 @@ void runInputLoop()
 		// Please note that arguments are passed exactly like in C and C++, with the name of the executable being the first argument.
 		int exitCode;
 		sppClient_mtx.lock();
-		int ret = sppClient.runScript(pathBuf, argc, &argList[0], &exitCode);
+		int ret = sppClient.createSandbox(pathBuf, argc, &argList[0], &exitCode);
 		sppClient_mtx.unlock();
 		if(ret != spp::k_EOK) {
 			sppClient_mtx.lock();
-			sppClient.killScript(pathBuf);
+			sppClient.destroySandbox(pathBuf);
 			sppClient_mtx.unlock();
 			switch(ret)
 			{
@@ -85,9 +85,7 @@ void runCallbackLoop()
 	{
 		while( Steam_BGetCallback( sppClient.getSteamPipe(), &msg) )
 		{
-			sppClient_mtx.lock();
-			sppClient.fireCallbacks( msg.m_iCallback, msg.m_cubParam, msg.m_pubParam );
-			sppClient_mtx.unlock();
+			spp::fireCallbacks( msg.m_iCallback, msg.m_cubParam, msg.m_pubParam );
 			Steam_FreeLastCallback(sppClient.getSteamPipe());
 		}
 		

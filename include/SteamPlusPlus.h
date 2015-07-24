@@ -87,7 +87,50 @@ int vprintf(PrintMode printMode, const char* fmt, va_list args);
  */
 char* gets(char* str, size_t n, bool displayHeader = true);
 
-/**This class wraps the OpenSteamworks API and the LUA interpreter together.*/
+/** This class isolates a lua_State from the others, safely allowing it to spawn and ~~murder~~ kill children. */
+class LuaSandbox
+{
+	private:
+	/** The lua_State being sandboxed. */
+	lua_State* m_innerState;
+	
+	/** A sandbox for each child script... to play in. */
+	std::unordered_map<std::string, LuaSandbox*> m_scripts;
+	
+	public:
+	~LuaSandbox();
+	
+	/**
+	 * @brief Runs a script.
+	 * @param script The relative path to the script.
+	 * @param argc The number of arguments to pass to the script.
+	 * @param argv The list of arguments to pass to the script. It should be of length argc and the first argument should be equivalent to its name.
+	 * @param retcode The return code of the script.
+	 * @return kE_OK 				on success,
+	 *         kE_Fail 				on generic failures (which are documented by an error handler),
+	 *         kE_FileNotFound		if the script wasn't found, 
+	 *         kE_Memory			if lua_loadfile failed due to memory allocation problems,
+	 *         kE_Unknown			welp.
+	 */
+	int runScript(const char* script, int argc, const char** argv, int* retcode);
+	
+	/**
+	 * @brief Kills a script and detaches any hooks it originally had created.
+	 * @param script The name of the script to kill. 
+	 *        IMPORTANT: This is the name that was used to load the script, so if it was moved don't pass its new location.
+	 * @return kE_OK				on success,
+	 *         kE_FileNotFound		if an invalid path was passed,
+	 *         kE_Unknown			welp.
+	 */
+	int killScript(const char* script);
+	
+	/**
+	 * @brief Returns a pointer to the lua_State being sandboxed.
+	 */
+	lua_State* getLuaState();
+};
+
+/** This class wraps the OpenSteamworks API and the LUA interpreter together. */
 class SteamPlusPlus
 {
 	private:
@@ -98,17 +141,11 @@ class SteamPlusPlus
 	HSteamUser m_hUser;
 	CSteamAPILoader		m_steamLoader;
 	ISteamClient017 * 	m_pSteamClient;
-	//IClientFriends*		m_pClientFriends;
 	ISteamUser017* 		m_pSteamUser;
 	ISteamFriends015* 	m_pSteamFriends;
 	
-	/** Maps each lua_State to the name of the script it originated from. Scripts are sandboxed from each other. */
-	std::unordered_map<std::string, lua_State*> m_scripts;
-	/** Maps each callback id to a vector of pairs of lua_States and strings which represent the LUA function to be called. */
-	std::unordered_map<int, std::vector<std::pair<lua_State*, std::string>>> m_callbacks;
-	
-	/** Creates the global symbols available to each script and does other initializations. */
-	int initializeScript(lua_State* L);
+	/** The sandbox in which scripts ran by SteamPlusPlus itself are executed. */
+	LuaSandbox m_globalSandbox;
 	
 	public:
 	~SteamPlusPlus();
@@ -123,86 +160,95 @@ class SteamPlusPlus
 	ISteamClient017*  getISteamClient()  { return m_pSteamClient; }
 	ISteamUser017*    getISteamUser()    { return m_pSteamUser; }
 	ISteamFriends015* getISteamFriends() { return m_pSteamFriends; }
-
-	/**
-	 * @brief Runs a script.
-	 * @param script The relative path to the script.
-	 * @param argc The number of arguments to pass to the script.
-	 * @param argv The list of arguments to pass to the script. It should be of length argc and the first argument should be equivalent to its name.
-	 * @param retcode The return code of the script.
-	 * @return kE_OK 				on success,
-	 *         kE_Fail 				on generic failures (which are documented by an error handler),
-	 *         kE_FileNotFound		if the script wasn't found, 
-	 *         kE_Memory			if lua_loadfile failed due to memory allocation problems,
-	 *         kE_Uninitialized		if OpenSteamworks or the LUA Engine have not been loaded,
-	 *         kE_Unknown			welp.
-	 */
-	int runScript(const char* script, int argc, const char** argv, int* retcode);
 	
 	/**
-	 * @brief Kills a script and detaches any hooks it originally had created.
-	 * @param script The name of the script to kill. 
-	 *        IMPORTANT: This is the name that was used to load the script, so if it was moved don't pass its new location.
-	 * @return kE_OK				on success,
-	 *         kE_FileNotFound		if an invalid path was passed,
-	 *         kE_Uninitialized		if OpenSteamworks or the LUA Engine have not been loaded,
-	 *         kE_Unknown			welp.
+	 * @brief Basically just a wrapper of LuaSandbox::runScript, which instead has an appropriate description.
+	 * @return This function can additionally return k_EUninitialized if Steamworks hasn't been initialized yet.
 	 */
-	int killScript(const char* script);
+	int createSandbox(const char* script, int argc, const char** argv, int* retcode);
 	
 	/**
-	 * @brief Registers a LUA callback that fires whenever the given event is intercepted.
-	 * @param cbID The event to intercept.
-	 * @param L The lua_State that will get its callback called.
-	 * @param cbname The name of the LUA function that defines the callback.
-	 * @return k_EOK on success, k_EFail on failure (callback already registered?).
+	 * @brief Basically just a wrapper of LuaSandbox::killScript, which instead has an appropriate description.
+	 * @return This function can additionally return k_EUninitialized if Steamworks hasn't been initialized yet.
 	 */
-	int registerCallback(int cbID, lua_State* L, const char* cbname);
+	int destroySandbox(const char* script);
 	
-	/**
-	 * @brief Unregisters a previously registered LUA callback.
-	 * @param cbID The event to unregister.
-	 * @param L The lua_State.
-	 * @return k_EOK on success, k_EFail on failure (callback not registered?).
-	 */
-	int unregisterCallback(int cbID, lua_State* L);
-	
-	/**
-	 * @brief Fires any callback associated with the given cbID.
-	 */
-	void fireCallbacks(int cbID, int cubParam, uint8* pubParam);
 };
+
+/**
+ * @brief Registers a LUA callback that fires whenever the given event is intercepted.
+ * @param cbID The event to intercept.
+ * @param L The lua_State for which the callback is registered.
+ * @param cbname The name of the LUA function that defines the callback.
+ * @return k_EOK on success, k_EFail on failure (callback already registered?).
+ */
+int registerCallback(int cbID, lua_State* L, const char* cbname);
+
+/**
+ * @brief Unregisters a previously registered LUA callback.
+ * @param cbID The event to unregister.
+ * @param L The lua_State for which the callback is unregistered.
+ * @return k_EOK on success, k_EFail on failure (callback not registered?).
+ */
+int unregisterCallback(int cbID, lua_State* L);
+
+/**
+ * @brief Unregisters any previously registered LUA callback.
+ * @param L The lua_State for which the callbacks are unregistered.
+ */
+void unregisterAllCallbacks(lua_State* L);
+
+/**
+ * @brief Fires any callback associated with the given cbID.
+ */
+void fireCallbacks(int cbID, int cubParam, uint8* pubParam);
+
 	namespace lua
 	{
-		/**
-		 * @brief Prints a string in kPrintNormal mode.
-		 */
-		int l_print(lua_State* L);
-		/**
-		 * @brief Prints a string in kPrintError mode.
-		 */
-		int l_printerr(lua_State* L);
-		/**
-		 * @brief Prints a string in kPrintInfo mode.
-		 */
-		int l_printinfo(lua_State* L);
-		/**
-		 * @brief Prints a string in kPrintBoring mode.
-		 */
-		int l_printboring(lua_State* L);
-		/**
-		 * @brief Registers a callback that fires when the passed message is intercepted.
-		 */
-		int l_registercback(lua_State* L);
-		/**
-		 * @brief Unregisters a previously registered callback.
-		 */
-		int l_unregistercback(lua_State* L);
-		/**
-		 * @brief Parses a FriendChatMsg_t pointer.
-		 */
-		int l_parsechatmsg(lua_State* L);
+	int handleRuntimeError(lua_State* L, int ret);	
+	int handleCompileTimeError(lua_State* L, int ret);	
+	int initializeScript(lua_State* L);
 		
+	/**
+	 * @brief Prints a string in kPrintNormal mode.
+	 */
+	int l_print(lua_State* L);
+	/**
+	 * @brief Prints a string in kPrintError mode.
+	 */
+	int l_printerr(lua_State* L);
+	/**
+	 * @brief Prints a string in kPrintInfo mode.
+	 */
+	int l_printinfo(lua_State* L);
+	/**
+	 * @brief Prints a string in kPrintBoring mode.
+	 */
+	int l_printboring(lua_State* L);
+	/**
+	 * @brief Registers a callback that fires when the passed message is intercepted.
+	 */
+	int l_registercback(lua_State* L);
+	/**
+	 * @brief Unregisters a previously registered callback.
+	 */
+	int l_unregistercback(lua_State* L);
+	/**
+	 * @brief Calls a LUA script, returning its exit code.
+	 */
+	int l_runscript(lua_State* L);
+	/**
+	 * @brief Kills a LUA script that was previously called.
+	 * Only a script that was created by the calling script can be killed.
+	 */
+	int l_killscript(lua_State* L);
+
+	/* OPENSTEAMWORKS BINDINGS BELOW */
+
+	/**
+	 * @brief Parses a FriendChatMsg_t pointer.
+	 */
+	int l_parsechatmsg(lua_State* L);
 	}
 }
 

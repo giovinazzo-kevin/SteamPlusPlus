@@ -3,21 +3,16 @@
 
 #include "Main.h"
 
-const char* kScriptsFolderPath = "scripts/";
-
 spp::SteamPlusPlus sppClient;
-std::mutex sppClient_mtx;
+std::recursive_mutex sppClient_mtx;
 
 //! Handles user input and is responsible for running scripts
-void runInputLoop()
+static void runInputThread()
 {
 	char inbuf[BUFSIZ];
 	while( sppClient.isRunning() ) { // isRunning is false when the sppClient is uninitialized so it's safe to call
 		// Ask the user to input something
 		spp::gets(inbuf, BUFSIZ, true);
-		
-		// Flush the input buffer. fflush(stdin) yields undefined behaviour on input streams and shouldn't be used.
-		// char c_; while((c_ = getchar()) != '\n' && c_ != EOF); 
 
 		// Split the entered string into tokens, or arguments
 		std::vector<const char*> argList;
@@ -33,23 +28,15 @@ void runInputLoop()
 			continue;
 		}
 		
-		// Prepend the scripts folder's location to the first argument
-		char pathBuf[ strlen(argList[0]) + strlen(kScriptsFolderPath) + 5]; // + 5 = Additional 4 bytes in case ".lua" needs to be appended and terminator.
-		sprintf(pathBuf, "%s%s", kScriptsFolderPath, argList[0]);
-		// If the entered path doesn't end in .lua, add it
-		if( strstr(pathBuf, ".lua") != pathBuf + strlen(pathBuf) - 4 ) {
-			strcat(pathBuf, ".lua");
-		}
-		
 		// Try to run the script, passing it the arguments
 		// Please note that arguments are passed exactly like in C and C++, with the name of the executable being the first argument.
 		int exitCode;
 		sppClient_mtx.lock();
-		int ret = sppClient.createSandbox(pathBuf, argc, &argList[0], &exitCode);
+		int ret = sppClient.createSandbox(argList[0], argc, &argList[0], &exitCode);
 		sppClient_mtx.unlock();
 		if(ret != spp::k_EOK) {
 			sppClient_mtx.lock();
-			sppClient.destroySandbox(pathBuf);
+			sppClient.destroySandbox(argList[0]);
 			sppClient_mtx.unlock();
 			switch(ret)
 			{
@@ -57,39 +44,53 @@ void runInputLoop()
 					spp::printf(spp::kPrintError, "The SteamPlusPlus object is uninitialized.\n");
 				break;
 				case spp::k_EFileNotFound:
-					spp::printf(spp::kPrintError, "Script \"%s\" does not exist.\n", pathBuf);
+					spp::printf(spp::kPrintError, "Script \"%s\" does not exist.\n", argList[0]);
 				break;
 				case spp::k_EMemory:
-					spp::printf(spp::kPrintError, "Script \"%s\" could not be allocated in memory.\n", pathBuf);
+					spp::printf(spp::kPrintError, "Script \"%s\" could not be allocated in memory.\n", argList[0]);
 				break;
 				case spp::k_EUnknown:
 					spp::printf(spp::kPrintError, "Unknown error.\n");
 				break;
 				// Any other error should speak for itself through an error handler. Should...
 				default:
-					spp::printf(spp::kPrintError, "Aborting due to previous error (%d).\n", ret);
+					spp::printf(spp::kPrintError, "Aborting due to previous error. (%d)\n", ret);
 				break;
 			}
 		} else {
-			spp::printf(spp::kPrintBoring, "Script quit with exit code (%d).\n", exitCode);
+			spp::printf(spp::kPrintBoring, "Script quit with exit code %d.\n", exitCode);
 		}
 	}
 }
 
 
-void runCallbackLoop() 
+static void runCallbackThread() 
 {
 	CallbackMsg_t msg;
-	
-	while( sppClient.isRunning() ) // isRunning is false when the sppClient is uninitialized so it's safe to call
+	while( sppClient.isRunning() && Steam_BGetCallback( sppClient.getSteamPipe(), &msg) ) // BGetCallback is (B)locking
 	{
-		while( Steam_BGetCallback( sppClient.getSteamPipe(), &msg) )
-		{
+		/* The '0' callback has no meaning, and I'm replacing it to give it a new one.
+		 * Any script that registers it, will have it called every tick. Like an infinite loop.
+		 * This serves the purpose of keeping alive scripts which depend on their state, and also
+		 * provides a way of creating non-blocking infinite loops.
+		 * 
+		 * If a script wants to commit sudoku, all it has to do is unregister all of its callbacks.
+		 */
+		if( msg.m_iCallback != 0 ) {
 			spp::fireCallbacks( msg.m_iCallback, msg.m_cubParam, msg.m_pubParam );
-			Steam_FreeLastCallback(sppClient.getSteamPipe());
 		}
 		
-		sleep(100);
+		Steam_FreeLastCallback(sppClient.getSteamPipe());
+	}
+}
+
+//! Since Steam_BGetCallback is blocking, this thread fires the special callback '0' to all the scripts
+static void runTickThread()
+{
+	while( sppClient.isRunning()  ) 
+	{
+		spp::fireCallbacks( 0, 0, 0 );
+		sleep(1); // Just to avoid making the CPU too busy.
 	}
 }
 
@@ -101,8 +102,11 @@ int main(int argc, char** argv)
 	}
 	spp::printf(spp::kPrintNormal, "\nWelcome to Steam++!\n");
 	
-	std::thread cbthread(runCallbackLoop);
-	runInputLoop();
+	std::thread cbthread(runCallbackThread);
+	std::thread tickthread(runTickThread);
+	
+	runInputThread();
+	tickthread.join();
 	cbthread.join();
 	
     return 0;

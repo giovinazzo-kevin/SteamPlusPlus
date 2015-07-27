@@ -6,8 +6,6 @@
 
 #include "SteamPlusPlus.h"
 
-extern const char* kScriptsFolderPath; //! The path to the folder where scripts are stored by default.
-
 extern spp::SteamPlusPlus sppClient;
-extern std::mutex sppClient_mtx;
+extern std::recursive_mutex sppClient_mtx;
 #endif // MAINLOOP_H

@@ -24,7 +24,7 @@ int spp::lua::initializeScript(lua_State* L)
 	// This is the main table containing functions that interface directly with SPP.
 	// Note: setfield pops the value off the stack.
 	
-	lua_newtable(L);
+	lua_newtable(L); // spp
 	
 	lua_pushcfunction(L, spp::lua::l_print);
 	lua_setfield(L, -2, "print");
@@ -44,9 +44,20 @@ int spp::lua::initializeScript(lua_State* L)
 	lua_pushcfunction(L, spp::lua::l_unregistercback);
 	lua_setfield(L, -2, "unregisterCallback");
 	
+	lua_pushcfunction(L, spp::lua::l_runscript);
+	lua_setfield(L, -2, "run");
+	
+	lua_pushcfunction(L, spp::lua::l_killscript);
+	lua_setfield(L, -2, "kill");
+	
+	lua_newtable(L); // steam
+	
 	lua_pushcfunction(L, spp::lua::l_parsechatmsg);
 	lua_setfield(L, -2, "parseChatMsg");
 	
+	// Set the inner table as a global and pop it from the stack
+	lua_setglobal(L, "steam");
+	// Set the outer table as a global and pop it from the stack
 	lua_setglobal(L, "spp");
 	
 	// Let's override print() as well to make it more future-proof.
@@ -119,61 +130,92 @@ int spp::lua::l_printboring(lua_State* L)
 	return 0;
 }
 
+// Signature: registerCallback(cbID, callback) -> success
 int spp::lua::l_registercback(lua_State* L)
 {
-	if( !lua_isinteger(L, 1) ) {
-		lua_pushstring(L, "The first argument must be an integer, the Callback ID.");
-		lua_error(L);
-	}
-	
-	if( !lua_isstring(L, 2)  ) {
-		lua_pushstring(L, "The second argument must be a string, the name of the Callback function.");
-		lua_error(L);
-	}
+	luaL_checktype(L, 1, LUA_TNUMBER);
+	luaL_checktype(L, 2, LUA_TSTRING);
 	
 	int cbID = lua_tointeger(L, 1);
 	const char* cbName = lua_tostring(L, 2);
-	
 	int ret = spp::registerCallback(cbID, L, cbName);
 	
 	lua_pushinteger(L, ret);
-	
 	return 1;
 }
 
+// Signature: unregisterCallback(cbName) -> success
 int spp::lua::l_unregistercback(lua_State* L)
 {
-	if( !lua_isinteger(L, 1) ) {
-		lua_pushstring(L, "The first argument must be an integer, the Callback ID.");
-		lua_error(L);
-	}
+	luaL_checktype(L, 1, LUA_TSTRING);
 	
-	int cbID = lua_tointeger(L, 1);
+	const char* cbname = lua_tostring(L, 1);
+	int ret = spp::unregisterCallback(L, cbname);
 	
-	int ret = spp::unregisterCallback(cbID, L);
-	
-	lua_pushnumber(L, ret);
-	
+	lua_pushinteger(L, ret);
 	return 1;
 }
 
+// Signature: runScript(script, args) -> success, retCode
 int spp::lua::l_runscript(lua_State* L)
 {
-	if( !lua_isstring(L, 1) ) {
-		lua_pushstring(L, "The first argument must be a string, the name of the script to call.");
+	luaL_checktype(L, 1, LUA_TSTRING);
+	luaL_checktype(L, 2, LUA_TTABLE);
+	
+	const char* script = lua_tostring(L, 1);
+	int argc =  lua_rawlen(L, 2);
+	
+	// Before pushing the args, push the script name as the first arg
+	const char* argv[++argc];
+	argv[0] = script;
+	
+	for(int i = 1; i < argc; ++i)
+	{
+		lua_rawgeti(L, 2, i); // Push args[i] to the stack
+		argv[i] = lua_tostring( L, -1 );
+		lua_pop(L, 1); // No need for keeping it on the stack
+	}
+	
+	int scriptRet;
+	sppClient_mtx.lock();
+	LuaSandbox* container = sppClient.getGlobalSandbox()->rfindParent(L);
+	if( container == NULL ) { // Aw, this lua_State* was orphaned.
+		lua_pushstring(L, "The calling script was orphaned.");
 		lua_error(L);
 	}
 	
+	int ret = container->runScript(script, argc, argv, &scriptRet);
+	sppClient_mtx.unlock();
+
+	lua_pushinteger(L, ret);	
+	lua_pushinteger(L, scriptRet);
 	
+	return 2;
+}
+
+// Signature: killScript(script) -> success
+int spp::lua::l_killscript(lua_State* L)
+{
+	luaL_checktype(L, 1, LUA_TSTRING);
 	
+	const char* script = lua_tostring(L, 1);
+	
+	sppClient_mtx.lock();
+	LuaSandbox* container = sppClient.getGlobalSandbox()->rfindParent(L);
+	if( container == NULL ) { // Aw, this lua_State* was orphaned.
+		lua_pushstring(L, "The calling script was orphaned.");
+		lua_error(L);
+	}
+	int ret =  container->killScript(script);
+	sppClient_mtx.unlock();
+
+	lua_pushinteger(L, ret);	
+	return 1;
 }
 
 int spp::lua::l_parsechatmsg(lua_State* L)
 {
-	if( !lua_islightuserdata(L, 1) ) {
-		lua_pushstring(L, "The first argument must be a pointer, the pubParam.");
-		lua_error(L);
-	}
+	luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
 	
 	uint8* pubParam = static_cast<uint8*>( lua_touserdata(L,1) );
 	if( pubParam == NULL ) {

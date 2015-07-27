@@ -1,9 +1,27 @@
+#include <cstdlib> // malloc
 #include "SteamPlusPlus.h"
+
+const char* kScriptsFolderPath = "scripts/";
+
+char* _buildPath(const char* script)
+{
+	// Prepend the scripts folder's location to the first argument
+	char* pathBuf = (char*)malloc(strlen(script) + strlen(kScriptsFolderPath) + 5); // + 5 = Additional 4 bytes in case ".lua" needs to be appended and terminator.
+	sprintf(pathBuf, "%s%s", kScriptsFolderPath, script);
+	// If the entered path doesn't end in .lua, add it
+	if( strstr(pathBuf, ".lua") != pathBuf + strlen(pathBuf) - 4 ) {
+		strcat(pathBuf, ".lua");
+	}
+	return pathBuf;
+}
 
 int spp::LuaSandbox::runScript(const char* script, int argc, const char** argv, int* retcode)
 {
 	lua_State* L;
 	int ret;
+	
+	// Try to get a working path from the script name
+	script = _buildPath(script);
 	
 	// If it's the first time running this script, create a new environment for it.
 	if(m_scripts.find(script) == m_scripts.end()) {
@@ -14,6 +32,7 @@ int spp::LuaSandbox::runScript(const char* script, int argc, const char** argv, 
 		// 		Step 1. Load file
 		ret = luaL_loadfile(L, script);
 		if( ret != 0 ) {
+			delete script;
 			return spp::lua::handleCompileTimeError(L, ret);
 		}
 	
@@ -23,6 +42,7 @@ int spp::LuaSandbox::runScript(const char* script, int argc, const char** argv, 
 		//		Step 3. Call the script so that it creates any of its global vars
 		ret = lua_pcall(L, 0, 0, 0);
 		if( ret != 0 ) {
+			delete script;
 			return spp::lua::handleRuntimeError(L, ret);
 		}
 	}
@@ -46,17 +66,28 @@ int spp::LuaSandbox::runScript(const char* script, int argc, const char** argv, 
 	// Pass two arguments (argc and the argv table) and expect one returned value (exit code)
 	ret = lua_pcall(L, 2, 1, 0);
 	if( ret != 0 ) {
+		killScript(script);
+		delete script;
 		return spp::lua::handleRuntimeError(L, ret);
 	}
 	
 	*retcode = lua_tonumber(L, -1);
 	lua_pop(L, 1);
 	
+	// If the script hasn't registered any callbacks, RIP
+	if( !spp::hasCallbacks(L) ) {
+		killScript(script);
+	}
+	
+	delete script;
 	return k_EOK;
 }
 
 int spp::LuaSandbox::killScript(const char* script)
 {
+	// Try to get a working path from the script name
+	script = _buildPath(script);
+	
 	// If the passed script exists
 	if( m_scripts.find(script) != m_scripts.end() ) {
 		lua_State* s = m_scripts[script]->m_innerState;
@@ -68,16 +99,44 @@ int spp::LuaSandbox::killScript(const char* script)
 		delete m_scripts[script];
 		m_scripts.erase(script);
 		
+		delete script;
 		return k_EOK;
 	}
 	else {
+		delete script;
 		return k_EFileNotFound;
 	}
 }
 
-lua_State* spp::LuaSandbox::getLuaState()
+
+spp::LuaSandbox* spp::LuaSandbox::rfindParent(lua_State* L)
 {
-	return m_innerState;
+	if( this->m_innerState == L ) {
+		return this;
+	}
+	
+	for( auto it = m_scripts.begin(); it != m_scripts.end(); ++it)
+	{
+		LuaSandbox* ret = it->second->rfindParent(L);
+		if( ret != NULL ) {
+			return ret;
+		}
+	}
+	
+	return NULL;
+}
+
+const char* spp::LuaSandbox::findName(lua_State* L)
+{
+	for( auto it = m_scripts.begin(); it != m_scripts.end(); ++it)
+	{
+		if( it->second->m_innerState == L ) {
+			return it->first.c_str();
+		}
+		
+	}
+	
+	return NULL;
 }
 
 spp::LuaSandbox::~LuaSandbox()

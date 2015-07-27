@@ -123,11 +123,32 @@ class LuaSandbox
 	 *         kE_Unknown			welp.
 	 */
 	int killScript(const char* script);
+	/**
+	 * @brief Kills a script and detaches any hooks it originally had created.
+	 * @param L The lua_State* of the script to kill. 
+	 * @return kE_OK				on success,
+	 *         kE_FileNotFound		if an invalid lua_Script was passed,
+	 *         kE_Unknown			welp.
+	 */
+	inline int killScript(lua_State* L) 
+	{
+		return killScript( findName(L) );
+	}
+	
+	/**
+	 * @brief Returns a pointer to the sandbox associated to the given lua_State*, or NULL.
+	 * This function is recursive.
+	 */
+	LuaSandbox* rfindParent(lua_State* L);
+	/**
+	 * @brief Returns the name of the script that matches the given lua_State
+	 */
+	const char* findName(lua_State* L);
 	
 	/**
 	 * @brief Returns a pointer to the lua_State being sandboxed.
 	 */
-	lua_State* getLuaState();
+	lua_State* getLuaState() { return m_innerState; }
 };
 
 /** This class wraps the OpenSteamworks API and the LUA interpreter together. */
@@ -160,6 +181,7 @@ class SteamPlusPlus
 	ISteamClient017*  getISteamClient()  { return m_pSteamClient; }
 	ISteamUser017*    getISteamUser()    { return m_pSteamUser; }
 	ISteamFriends015* getISteamFriends() { return m_pSteamFriends; }
+	LuaSandbox* getGlobalSandbox() { return &m_globalSandbox; }
 	
 	/**
 	 * @brief Basically just a wrapper of LuaSandbox::runScript, which instead has an appropriate description.
@@ -172,7 +194,6 @@ class SteamPlusPlus
 	 * @return This function can additionally return k_EUninitialized if Steamworks hasn't been initialized yet.
 	 */
 	int destroySandbox(const char* script);
-	
 };
 
 /**
@@ -186,17 +207,23 @@ int registerCallback(int cbID, lua_State* L, const char* cbname);
 
 /**
  * @brief Unregisters a previously registered LUA callback.
- * @param cbID The event to unregister.
  * @param L The lua_State for which the callback is unregistered.
+ * @param cbname The function to unregister.
  * @return k_EOK on success, k_EFail on failure (callback not registered?).
  */
-int unregisterCallback(int cbID, lua_State* L);
+int unregisterCallback(lua_State* L, const char* cbname);
 
 /**
  * @brief Unregisters any previously registered LUA callback.
  * @param L The lua_State for which the callbacks are unregistered.
  */
 void unregisterAllCallbacks(lua_State* L);
+
+/**
+ * @brief Returns true if the lua_State has registered at least one callback.
+ * @param L The lua_State for which the callbacks are checked.
+ */
+bool hasCallbacks(lua_State* L);
 
 /**
  * @brief Fires any callback associated with the given cbID.

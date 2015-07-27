@@ -21,6 +21,7 @@ int spp::SteamPlusPlus::createSandbox(const char* script, int argc, const char**
 	if( !isRunning() ) {
 		return k_EUninitialized;
 	}
+	
 	return m_globalSandbox.runScript(script, argc, argv, retcode);
 }
 
@@ -29,5 +30,6 @@ int spp::SteamPlusPlus::destroySandbox(const char* script)
 	if( !isRunning() ) {
 		return k_EUninitialized;
 	}
+	
 	return m_globalSandbox.killScript(script);
 }

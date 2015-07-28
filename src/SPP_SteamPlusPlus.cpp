@@ -1,13 +1,13 @@
 #include <mutex>
 #include "SteamPlusPlus.h"
 
-static std::mutex running_mtx;
 
 spp::SteamPlusPlus::~SteamPlusPlus()
 {
 	cleanupSteamworks();
 }
 
+static std::mutex running_mtx;
 bool spp::SteamPlusPlus::isRunning()
 {
 	running_mtx.lock();
@@ -21,7 +21,7 @@ int spp::SteamPlusPlus::createSandbox(const char* script, int argc, const char**
 	if( !isRunning() ) {
 		return k_EUninitialized;
 	}
-	
+	// Thread safety is implemented by LuaSandbox
 	return m_globalSandbox.runScript(script, argc, argv, retcode);
 }
 
@@ -30,6 +30,6 @@ int spp::SteamPlusPlus::destroySandbox(const char* script)
 	if( !isRunning() ) {
 		return k_EUninitialized;
 	}
-	
+	// Thread safety is implemented by LuaSandbox
 	return m_globalSandbox.killScript(script);
 }

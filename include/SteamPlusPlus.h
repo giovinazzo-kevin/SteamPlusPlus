@@ -143,12 +143,12 @@ class LuaSandbox
 	/**
 	 * @brief Returns the name of the script that matches the given lua_State
 	 */
-	const char* findName(lua_State* L);
+	const char* findName(lua_State* L) const;
 	
 	/**
 	 * @brief Returns a pointer to the lua_State being sandboxed.
 	 */
-	lua_State* getLuaState() { return m_innerState; }
+	lua_State* getLuaState() const { return m_innerState; }
 };
 
 /** This class wraps the OpenSteamworks API and the LUA interpreter together. */
@@ -161,7 +161,7 @@ class SteamPlusPlus
 	HSteamPipe m_hPipe;
 	HSteamUser m_hUser;
 	CSteamAPILoader		m_steamLoader;
-	ISteamClient017 * 	m_pSteamClient;
+	ISteamClient017* 	m_pSteamClient;
 	ISteamUser017* 		m_pSteamUser;
 	ISteamFriends015* 	m_pSteamFriends;
 	
@@ -176,11 +176,11 @@ class SteamPlusPlus
 	int initSteamworks();
 	void cleanupSteamworks();
 	
-	HSteamPipe getSteamPipe() { return m_hPipe; }
-	HSteamUser getSteamUser() { return m_hUser; }
-	ISteamClient017*  getISteamClient()  { return m_pSteamClient; }
-	ISteamUser017*    getISteamUser()    { return m_pSteamUser; }
-	ISteamFriends015* getISteamFriends() { return m_pSteamFriends; }
+	HSteamPipe getSteamPipe() const { return m_hPipe; }
+	HSteamUser getSteamUser() const { return m_hUser; }
+	ISteamClient017*  getISteamClient() const { return m_pSteamClient; }
+	ISteamUser017*    getISteamUser() const   { return m_pSteamUser; }
+	ISteamFriends015* getISteamFriends() const { return m_pSteamFriends; }
 	LuaSandbox* getGlobalSandbox() { return &m_globalSandbox; }
 	
 	/**

@@ -1,7 +1,9 @@
 #include <cstdlib> // malloc
+#include <mutex>
 #include "SteamPlusPlus.h"
 
 const char* kScriptsFolderPath = "scripts/";
+static std::mutex sandbox_mtx;
 
 char* _buildPath(const char* script)
 {
@@ -23,6 +25,8 @@ int spp::LuaSandbox::runScript(const char* script, int argc, const char** argv, 
 	// Try to get a working path from the script name
 	script = _buildPath(script);
 	
+	// We don't want m_scripts or any lua_State* to be altered right now!
+	sandbox_mtx.lock();
 	// If it's the first time running this script, create a new environment for it.
 	if(m_scripts.find(script) == m_scripts.end()) {
 		m_scripts[script] = new LuaSandbox();
@@ -33,6 +37,7 @@ int spp::LuaSandbox::runScript(const char* script, int argc, const char** argv, 
 		ret = luaL_loadfile(L, script);
 		if( ret != 0 ) {
 			delete script;
+			sandbox_mtx.unlock();
 			return spp::lua::handleCompileTimeError(L, ret);
 		}
 	
@@ -43,6 +48,7 @@ int spp::LuaSandbox::runScript(const char* script, int argc, const char** argv, 
 		ret = lua_pcall(L, 0, 0, 0);
 		if( ret != 0 ) {
 			delete script;
+			sandbox_mtx.unlock();
 			return spp::lua::handleRuntimeError(L, ret);
 		}
 	}
@@ -68,6 +74,7 @@ int spp::LuaSandbox::runScript(const char* script, int argc, const char** argv, 
 	if( ret != 0 ) {
 		killScript(script);
 		delete script;
+		sandbox_mtx.unlock();
 		return spp::lua::handleRuntimeError(L, ret);
 	}
 	
@@ -80,6 +87,7 @@ int spp::LuaSandbox::runScript(const char* script, int argc, const char** argv, 
 	}
 	
 	delete script;
+	sandbox_mtx.unlock();
 	return k_EOK;
 }
 
@@ -88,22 +96,26 @@ int spp::LuaSandbox::killScript(const char* script)
 	// Try to get a working path from the script name
 	script = _buildPath(script);
 	
+	// Likewise, we don't want anything to change while we're killing a script
+	sandbox_mtx.lock();
 	// If the passed script exists
 	if( m_scripts.find(script) != m_scripts.end() ) {
-		lua_State* s = m_scripts[script]->m_innerState;
+		lua_State* L = m_scripts[script]->m_innerState;
 		// Unregister its callbacks
-		spp::unregisterAllCallbacks(s);
+		spp::unregisterAllCallbacks(L);
 		// Tell LUA to close the lua_State
-		lua_close(s);
+		lua_close(L);
 		// And then erase the script from the list of things this sandbox gives a fuck about
 		delete m_scripts[script];
 		m_scripts.erase(script);
 		
 		delete script;
+		sandbox_mtx.unlock();
 		return k_EOK;
 	}
 	else {
 		delete script;
+		sandbox_mtx.unlock();
 		return k_EFileNotFound;
 	}
 }
@@ -111,7 +123,9 @@ int spp::LuaSandbox::killScript(const char* script)
 
 spp::LuaSandbox* spp::LuaSandbox::rfindParent(lua_State* L)
 {
+	sandbox_mtx.lock();
 	if( this->m_innerState == L ) {
+		sandbox_mtx.unlock();
 		return this;
 	}
 	
@@ -119,23 +133,28 @@ spp::LuaSandbox* spp::LuaSandbox::rfindParent(lua_State* L)
 	{
 		LuaSandbox* ret = it->second->rfindParent(L);
 		if( ret != NULL ) {
+			sandbox_mtx.unlock();
 			return ret;
 		}
 	}
 	
+	sandbox_mtx.unlock();
 	return NULL;
 }
 
-const char* spp::LuaSandbox::findName(lua_State* L)
+const char* spp::LuaSandbox::findName(lua_State* L) const
 {
+	sandbox_mtx.lock();
 	for( auto it = m_scripts.begin(); it != m_scripts.end(); ++it)
 	{
 		if( it->second->m_innerState == L ) {
+			sandbox_mtx.unlock();
 			return it->first.c_str();
 		}
 		
 	}
 	
+	sandbox_mtx.unlock();
 	return NULL;
 }
 

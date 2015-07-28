@@ -31,13 +31,9 @@ static void runInputThread()
 		// Try to run the script, passing it the arguments
 		// Please note that arguments are passed exactly like in C and C++, with the name of the executable being the first argument.
 		int exitCode;
-		sppClient_mtx.lock();
 		int ret = sppClient.createSandbox(argList[0], argc, &argList[0], &exitCode);
-		sppClient_mtx.unlock();
 		if(ret != spp::k_EOK) {
-			sppClient_mtx.lock();
 			sppClient.destroySandbox(argList[0]);
-			sppClient_mtx.unlock();
 			switch(ret)
 			{
 				case spp::k_EUninitialized:
@@ -104,8 +100,8 @@ int main(int argc, char** argv)
 	
 	std::thread cbthread(runCallbackThread);
 	std::thread tickthread(runTickThread);
-	
 	runInputThread();
+	
 	tickthread.join();
 	cbthread.join();
 	

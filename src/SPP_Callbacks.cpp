@@ -12,10 +12,12 @@ struct LUACallback_t
 	const char* m_luaFuncName;
 };
 
+std::mutex callbacks_mtx;
 std::vector<LUACallback_t> g_callbacks;
 
 int spp::registerCallback(int cbID, lua_State* L, const char* cbname)
 {
+	callbacks_mtx.lock();
 	// Callback already registered from this script?
 	for( auto it = g_callbacks.begin(); it != g_callbacks.end(); ++it )
 	{
@@ -25,17 +27,20 @@ int spp::registerCallback(int cbID, lua_State* L, const char* cbname)
 		// The same cbID can only be bound to one function, and
 		// one function can only be bound to one cbID.
 		if( it->m_luaState == L ) { 
+			callbacks_mtx.unlock();
 			return k_EFail;
 		}
 	}
 	
 	// If not, register it
 	g_callbacks.push_back( (LUACallback_t){ cbID, L, cbname } );
+	callbacks_mtx.unlock();
 	return k_EOK;
 }
 
 int spp::unregisterCallback(lua_State* L, const char* cbname)
 {
+	callbacks_mtx.lock();
 	for( auto it = g_callbacks.begin(); it != g_callbacks.end(); ++it )
 	{
 		if( it->m_luaFuncName == cbname && it->m_luaState == L ) {
@@ -44,6 +49,7 @@ int spp::unregisterCallback(lua_State* L, const char* cbname)
 			// each lua_State*, so the loop can break here.
 			g_callbacks.erase(it);
 			if( spp::hasCallbacks(L) ) {
+				callbacks_mtx.unlock();
 				return k_EOK;
 			}
 			
@@ -55,11 +61,12 @@ int spp::unregisterCallback(lua_State* L, const char* cbname)
 				lua_error(L);
 			}
 			parent->killScript(L);
-			
+			callbacks_mtx.unlock();
 			return k_EOK;
 		}
 	}
 	// Callback not registered from this particular script
+	callbacks_mtx.unlock();
 	return k_EFail;
 }
 
@@ -90,6 +97,7 @@ bool spp::hasCallbacks(lua_State* L)
 
 void spp::fireCallbacks(int cbID, int cubParam, uint8* pubParam)
 {
+	callbacks_mtx.lock();
 	for( auto it = g_callbacks.begin(); it != g_callbacks.end(); ++it )
 	{
 		if( it->m_cbID != cbID ) continue;
@@ -121,4 +129,5 @@ void spp::fireCallbacks(int cbID, int cubParam, uint8* pubParam)
 			spp::printf( spp::kPrintError, "[%s] An error occurred while firing the callback (%d).\n", it->m_luaFuncName, ret);
 		}
 	}
+	callbacks_mtx.unlock();
 }

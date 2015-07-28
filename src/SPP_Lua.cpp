@@ -177,7 +177,6 @@ int spp::lua::l_runscript(lua_State* L)
 	}
 	
 	int scriptRet;
-	sppClient_mtx.lock();
 	LuaSandbox* container = sppClient.getGlobalSandbox()->rfindParent(L);
 	if( container == NULL ) { // Aw, this lua_State* was orphaned.
 		lua_pushstring(L, "The calling script was orphaned.");
@@ -185,7 +184,6 @@ int spp::lua::l_runscript(lua_State* L)
 	}
 	
 	int ret = container->runScript(script, argc, argv, &scriptRet);
-	sppClient_mtx.unlock();
 
 	lua_pushinteger(L, ret);	
 	lua_pushinteger(L, scriptRet);
@@ -200,14 +198,12 @@ int spp::lua::l_killscript(lua_State* L)
 	
 	const char* script = lua_tostring(L, 1);
 	
-	sppClient_mtx.lock();
 	LuaSandbox* container = sppClient.getGlobalSandbox()->rfindParent(L);
 	if( container == NULL ) { // Aw, this lua_State* was orphaned.
 		lua_pushstring(L, "The calling script was orphaned.");
 		lua_error(L);
 	}
 	int ret =  container->killScript(script);
-	sppClient_mtx.unlock();
 
 	lua_pushinteger(L, ret);	
 	return 1;

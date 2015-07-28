@@ -34,8 +34,7 @@ int spp::registerCallback(int cbID, lua_State* L, const char* cbname)
 	
 	// If not, register it
 	spp::LuaSandbox* parent = sppClient.getGlobalSandbox()->rfindParent(L);
-	const char* scriptname = parent->findName(L);
-	spp::printf( spp::kPrintBoring, "- Script '%s' registered callback '%d' as '%s'.\n", scriptname, cbID, cbname );
+	spp::printf( spp::kPrintBoring, ">> Script '%s' registered callback '%d' as '%s'.\n", parent->getName(), cbID, cbname );
 	
 	g_callbacks.push_back( (LUACallback_t){ cbID, L, cbname } );
 	callbacks_mtx.unlock();
@@ -54,8 +53,8 @@ int spp::unregisterCallback(lua_State* L, const char* cbname)
 			g_callbacks.erase(it);
 			
 			spp::LuaSandbox* parent = sppClient.getGlobalSandbox()->rfindParent(L);
-			const char* scriptname = parent->findName(L);
-			spp::printf( spp::kPrintBoring, "- Script '%s' unregistered callback '%s'.\n", scriptname, cbname );
+			const char* scriptname = parent->getName();
+			spp::printf( spp::kPrintBoring, ">> Script '%s' unregistered callback '%s'.\n", scriptname, cbname );
 			
 			if( spp::hasCallbacks(L) ) {
 				callbacks_mtx.unlock();
@@ -65,7 +64,7 @@ int spp::unregisterCallback(lua_State* L, const char* cbname)
 			// If the current lua_State* doesn't have any more callbacks
 			// registered, it can die.
 			parent->killScript(L);
-			spp::printf( spp::kPrintInfo, "- The script was killed for not having registered any other callback.\n", scriptname, cbname );
+			spp::printf( spp::kPrintInfo, ">> The script was killed for not having registered any other callback.\n", scriptname, cbname );
 			callbacks_mtx.unlock();
 			return k_EOK;
 		}
@@ -100,7 +99,7 @@ bool spp::hasCallbacks(lua_State* L)
 	return false;
 }
 
-int spp::fireCallbacks(int cbID, int cubParam, uint8* pubParam)
+int spp::fireCallbacks(int cbID, uint8* pubParam)
 {
 	int callbacksFired = 0;
 	callbacks_mtx.lock();
@@ -109,7 +108,6 @@ int spp::fireCallbacks(int cbID, int cubParam, uint8* pubParam)
 		if( it->m_cbID != cbID ) continue;
 		
 		lua_getglobal(it->m_luaState, it->m_luaFuncName);
-		lua_pushinteger(it->m_luaState, cubParam);
 		lua_pushlightuserdata(it->m_luaState, (void *)pubParam);
 		
 		gets_mtx.lock();
@@ -123,7 +121,7 @@ int spp::fireCallbacks(int cbID, int cubParam, uint8* pubParam)
 			fputc('\b', stdout);
 		}
 		// Let the callback fire and print whatever it wants
-		int ret = lua_pcall(it->m_luaState, 2, 1, 0);
+		int ret = lua_pcall(it->m_luaState, 1, 1, 0);
 		// Re-print the header
 		setTerminalColor(spp::kPrintBoring);
 		fputs(header, stdout);

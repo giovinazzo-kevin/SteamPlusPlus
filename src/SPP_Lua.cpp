@@ -55,6 +55,9 @@ int spp::lua::initializeScript(lua_State* L)
 	lua_pushcfunction(L, spp::lua::l_parsechatmsg);
 	lua_setfield(L, -2, "parseChatMsg");
 	
+	lua_pushcfunction(L, spp::lua::l_getname);
+	lua_setfield(L, -2, "getName");
+	
 	// Set the inner table as a global and pop it from the stack
 	lua_setglobal(L, "steam");
 	// Set the outer table as a global and pop it from the stack
@@ -259,4 +262,23 @@ int spp::lua::l_parsechatmsg(lua_State* L)
 	lua_pushstring(L, msgBuf);
 
 	return 4;
+}
+
+int spp::lua::l_getname(lua_State* L)
+{
+	luaL_checktype(L, 1, LUA_TNUMBER);
+	
+	uint64 steamID = lua_tointeger(L, 1);
+	const char* name;
+	
+	if( steamID == sppClient.getISteamUser()->GetSteamID().ConvertToUint64() ) {
+		name = sppClient.getISteamFriends()->GetPersonaName();
+	}
+	else {
+		name = sppClient.getISteamFriends()->GetFriendPersonaName(steamID);
+	}
+	
+	lua_pushstring(L, name);
+
+	return 1;
 }

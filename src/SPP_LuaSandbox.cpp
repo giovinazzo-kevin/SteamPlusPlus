@@ -31,11 +31,13 @@ int spp::LuaSandbox::runScript(const char* script, int argc, const char** argv, 
 	if(m_scripts.find(script) == m_scripts.end()) {
 		m_scripts[script] = new LuaSandbox();
 		m_scripts[script]->m_innerState = L = luaL_newstate();
+		m_scripts[script]->m_name = script;
 		luaL_openlibs(L);
 		
 		// 		Step 1. Load file
 		ret = luaL_loadfile(L, script);
 		if( ret != 0 ) {
+			killScript(script);
 			delete script;
 			sandbox_mtx.unlock();
 			return spp::lua::handleCompileTimeError(L, ret);
@@ -47,6 +49,7 @@ int spp::LuaSandbox::runScript(const char* script, int argc, const char** argv, 
 		//		Step 3. Call the script so that it creates any of its global vars
 		ret = lua_pcall(L, 0, 0, 0);
 		if( ret != 0 ) {
+			killScript(script);
 			delete script;
 			sandbox_mtx.unlock();
 			return spp::lua::handleRuntimeError(L, ret);
@@ -70,18 +73,15 @@ int spp::LuaSandbox::runScript(const char* script, int argc, const char** argv, 
 		lua_settable(L, -3); // Put value at index and pop them off the stack
 	}
 	// Pass two arguments (argc and the argv table) and expect one returned value (exit code)
+	sandbox_mtx.unlock();
 	ret = lua_pcall(L, 2, 1, 0);
 	if( ret != 0 ) {
 		killScript(script);
 		delete script;
-		sandbox_mtx.unlock();
 		return spp::lua::handleRuntimeError(L, ret);
 	}
-	
 	*retcode = lua_tonumber(L, -1);
 	lua_pop(L, 1);
-	
-	sandbox_mtx.unlock();
 	// If the script hasn't registered any callbacks, RIP
 	if( !spp::hasCallbacks(L) ) {
 		killScript(script);
@@ -120,41 +120,31 @@ int spp::LuaSandbox::killScript(const char* script)
 	}
 }
 
+int spp::LuaSandbox::killScript(lua_State* L)
+{
+	LuaSandbox* parent = this->rfindParent(L);
+	if( parent == NULL ) {
+		return k_EFail;
+	}
+	
+	return this->killScript( parent->getName() );
+}
+
 
 spp::LuaSandbox* spp::LuaSandbox::rfindParent(lua_State* L)
 {
-	sandbox_mtx.lock();
 	if( this->m_innerState == L ) {
-		sandbox_mtx.unlock();
 		return this;
 	}
 	
-	for( auto it = m_scripts.begin(); it != m_scripts.end(); ++it)
+	for( auto it = m_scripts.begin(); it != m_scripts.end(); ++it )
 	{
 		LuaSandbox* ret = it->second->rfindParent(L);
 		if( ret != NULL ) {
-			sandbox_mtx.unlock();
 			return ret;
 		}
 	}
 	
-	sandbox_mtx.unlock();
-	return NULL;
-}
-
-const char* spp::LuaSandbox::findName(lua_State* L) const
-{
-	sandbox_mtx.lock();
-	for( auto it = m_scripts.begin(); it != m_scripts.end(); ++it)
-	{
-		if( it->second->m_innerState == L ) {
-			sandbox_mtx.unlock();
-			return it->first.c_str();
-		}
-		
-	}
-	
-	sandbox_mtx.unlock();
 	return NULL;
 }
 

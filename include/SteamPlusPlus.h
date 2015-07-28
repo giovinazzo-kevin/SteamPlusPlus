@@ -93,6 +93,7 @@ class LuaSandbox
 	private:
 	/** The lua_State being sandboxed. */
 	lua_State* m_innerState;
+	const char* m_name;
 	
 	/** A sandbox for each child script... to play in. */
 	std::unordered_map<std::string, LuaSandbox*> m_scripts;
@@ -130,25 +131,22 @@ class LuaSandbox
 	 *         kE_FileNotFound		if an invalid lua_Script was passed,
 	 *         kE_Unknown			welp.
 	 */
-	inline int killScript(lua_State* L) 
-	{
-		return killScript( findName(L) );
-	}
+	int killScript(lua_State* L);
 	
 	/**
 	 * @brief Returns a pointer to the sandbox associated to the given lua_State*, or NULL.
 	 * This function is recursive.
 	 */
 	LuaSandbox* rfindParent(lua_State* L);
-	/**
-	 * @brief Returns the name of the script that matches the given lua_State
-	 */
-	const char* findName(lua_State* L) const;
 	
 	/**
 	 * @brief Returns a pointer to the lua_State being sandboxed.
 	 */
 	lua_State* getLuaState() const { return m_innerState; }
+	/**
+	 * @brief Returns the name of this sandbox.
+	 */
+	const char* getName() const { return m_name; }
 };
 
 /** This class wraps the OpenSteamworks API and the LUA interpreter together. */
@@ -171,7 +169,7 @@ class SteamPlusPlus
 	public:
 	~SteamPlusPlus();
 	
-	bool isRunning();
+	bool isRunning() const;
 
 	int initSteamworks();
 	void cleanupSteamworks();
@@ -229,7 +227,7 @@ bool hasCallbacks(lua_State* L);
  * @brief Fires any callback associated with the given cbID.
  * @return The number of callbacks fired.
  */
-int fireCallbacks(int cbID, int cubParam, uint8* pubParam);
+int fireCallbacks(int cbID, uint8* pubParam);
 
 	namespace lua
 	{
@@ -277,6 +275,10 @@ int fireCallbacks(int cbID, int cubParam, uint8* pubParam);
 	 * @brief Parses a FriendChatMsg_t pointer.
 	 */
 	int l_parsechatmsg(lua_State* L);
+	/**
+	 * @brief Returns the Steam name associated to the given SteamID.
+	 */
+	int l_getname(lua_State* L);
 	}
 }
 

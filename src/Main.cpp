@@ -73,7 +73,7 @@ static void runCallbackThread()
 		 * If a script wants to commit sudoku, all it has to do is unregister all of its callbacks.
 		 */
 		if( msg.m_iCallback != 0 ) {
-			spp::fireCallbacks( msg.m_iCallback, msg.m_cubParam, msg.m_pubParam );
+			spp::fireCallbacks( msg.m_iCallback, msg.m_pubParam );
 		}
 		
 		Steam_FreeLastCallback(sppClient.getSteamPipe());
@@ -85,7 +85,7 @@ static void runTickThread()
 {
 	while( sppClient.isRunning()  ) 
 	{
-		if ( spp::fireCallbacks( 0, 0, 0 ) == 0 ) {
+		if ( spp::fireCallbacks( 0, 0 ) == 0 ) {
 			// If no callbacks were fired, let the CPU sleep for a while.
 			sleep(16); 
 		}
@@ -107,5 +107,5 @@ int main(int argc, char** argv)
 	tickthread.join();
 	cbthread.join();
 	
-    return 0;
+	return 0;
 }

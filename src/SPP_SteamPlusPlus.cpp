@@ -7,13 +7,9 @@ spp::SteamPlusPlus::~SteamPlusPlus()
 	cleanupSteamworks();
 }
 
-static std::mutex running_mtx;
-bool spp::SteamPlusPlus::isRunning()
+bool spp::SteamPlusPlus::isRunning() const
 {
-	running_mtx.lock();
-	bool ret = m_initialized;
-	running_mtx.unlock();
-	return ret;
+	return m_initialized;
 }
 
 int spp::SteamPlusPlus::createSandbox(const char* script, int argc, const char** argv, int* retcode)

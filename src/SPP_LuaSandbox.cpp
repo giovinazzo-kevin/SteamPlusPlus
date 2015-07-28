@@ -81,13 +81,13 @@ int spp::LuaSandbox::runScript(const char* script, int argc, const char** argv, 
 	*retcode = lua_tonumber(L, -1);
 	lua_pop(L, 1);
 	
+	sandbox_mtx.unlock();
 	// If the script hasn't registered any callbacks, RIP
 	if( !spp::hasCallbacks(L) ) {
 		killScript(script);
 	}
 	
 	delete script;
-	sandbox_mtx.unlock();
 	return k_EOK;
 }
 

@@ -227,8 +227,9 @@ bool hasCallbacks(lua_State* L);
 
 /**
  * @brief Fires any callback associated with the given cbID.
+ * @return The number of callbacks fired.
  */
-void fireCallbacks(int cbID, int cubParam, uint8* pubParam);
+int fireCallbacks(int cbID, int cubParam, uint8* pubParam);
 
 	namespace lua
 	{

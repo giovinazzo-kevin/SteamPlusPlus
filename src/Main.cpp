@@ -85,8 +85,10 @@ static void runTickThread()
 {
 	while( sppClient.isRunning()  ) 
 	{
-		spp::fireCallbacks( 0, 0, 0 );
-		sleep(1); // Just to avoid making the CPU too busy.
+		if ( spp::fireCallbacks( 0, 0, 0 ) == 0 ) {
+			// If no callbacks were fired, let the CPU sleep for a while.
+			sleep(16); 
+		}
 	}
 }
 
